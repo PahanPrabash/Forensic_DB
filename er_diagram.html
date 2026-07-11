@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ER Diagram — Forensic Medicine Department Database</title>
+<meta name="description" content="Interactive Entity Relationship Diagram for the Forensic Medicine Department Database System with 25 tables">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#0a0e1a;--surface:#111827;--surface2:#1e293b;--border:#334155;
+    --text:#e2e8f0;--text-muted:#94a3b8;--text-dim:#64748b;
+    --mod1:#6366f1;--mod2:#06b6d4;--mod3:#ef4444;--mod4:#f59e0b;
+    --mod5:#a855f7;--mod6:#10b981;--mod7:#3b82f6;--mod8:#ec4899;
+    --mod9:#f97316;--mod10:#84cc16;
+    --shadow:0 4px 24px rgba(0,0,0,0.4);
+    --radius:10px;
+  }
+  html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
+
+  /* ─── Toolbar ─── */
+  #toolbar{
+    position:fixed;top:0;left:0;right:0;height:56px;z-index:100;
+    background:rgba(17,24,39,0.85);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);
+    display:flex;align-items:center;padding:0 20px;gap:16px;
+  }
+  #toolbar h1{font-size:16px;font-weight:700;letter-spacing:-0.3px;
+    background:linear-gradient(135deg,#818cf8,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  }
+  #toolbar .sep{width:1px;height:24px;background:var(--border)}
+  #toolbar .info{font-size:12px;color:var(--text-muted)}
+  .toolbar-btns{margin-left:auto;display:flex;gap:6px}
+  .toolbar-btns button{
+    background:var(--surface2);border:1px solid var(--border);color:var(--text);
+    padding:6px 12px;border-radius:6px;font-size:12px;font-family:inherit;cursor:pointer;
+    transition:all .2s;
+  }
+  .toolbar-btns button:hover{background:var(--mod1);border-color:var(--mod1);color:#fff}
+  .toolbar-btns button.active{background:var(--mod1);border-color:var(--mod1);color:#fff}
+
+  /* ─── Viewport ─── */
+  #viewport{
+    position:fixed;top:56px;left:0;right:0;bottom:0;overflow:hidden;cursor:grab;
+  }
+  #viewport.grabbing{cursor:grabbing}
+  #canvas{
+    position:absolute;top:0;left:0;width:5000px;height:3600px;
+    transform-origin:0 0;
+  }
+
+  /* ─── SVG Relationships ─── */
+  #rel-svg{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1}
+  #rel-svg path{fill:none;stroke-width:1.8;opacity:0.5;transition:opacity .3s}
+  #rel-svg path.highlighted{opacity:1;stroke-width:2.5}
+  #rel-svg text{font-family:'Inter',sans-serif;font-size:11px;font-weight:600;fill:var(--text-muted)}
+
+  /* ─── Table Card ─── */
+  .table-card{
+    position:absolute;z-index:10;
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    box-shadow:var(--shadow);min-width:230px;max-width:280px;
+    transition:box-shadow .2s,border-color .2s;
+    user-select:none;
+  }
+  .table-card:hover{box-shadow:0 8px 32px rgba(0,0,0,0.6)}
+  .table-card.highlight{border-color:var(--mod1);box-shadow:0 0 20px rgba(99,102,241,0.3)}
+  .table-header{
+    padding:8px 12px;border-radius:var(--radius) var(--radius) 0 0;
+    font-size:13px;font-weight:700;letter-spacing:0.3px;color:#fff;
+    cursor:move;display:flex;align-items:center;gap:6px;
+  }
+  .table-header .icon{font-size:14px}
+  .table-cols{padding:4px 0;max-height:320px;overflow-y:auto}
+  .table-cols::-webkit-scrollbar{width:4px}
+  .table-cols::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+  .col-row{
+    padding:3px 12px;font-size:11px;display:flex;align-items:center;gap:6px;
+    font-family:'JetBrains Mono',monospace;color:var(--text-muted);
+    border-bottom:1px solid rgba(51,65,85,0.3);
+  }
+  .col-row:last-child{border-bottom:none}
+  .col-row .col-marker{
+    width:16px;font-size:9px;font-weight:700;text-align:center;flex-shrink:0;
+    border-radius:3px;padding:1px 2px;
+  }
+  .col-row .col-marker.pk{background:rgba(251,191,36,0.2);color:#fbbf24}
+  .col-row .col-marker.fk{background:rgba(56,189,248,0.2);color:#38bdf8}
+  .col-row .col-marker.pfk{background:rgba(168,85,247,0.2);color:#a855f7}
+  .col-row .col-name{flex:1;color:var(--text);font-weight:500}
+  .col-row .col-type{color:var(--text-dim);font-size:10px;font-weight:400}
+
+  /* ─── Legend ─── */
+  #legend{
+    position:fixed;bottom:20px;left:20px;z-index:100;
+    background:rgba(17,24,39,0.9);backdrop-filter:blur(12px);
+    border:1px solid var(--border);border-radius:var(--radius);
+    padding:14px 18px;max-width:280px;
+    box-shadow:var(--shadow);transition:transform .3s;
+  }
+  #legend.collapsed{transform:translateY(calc(100% - 40px))}
+  #legend h3{font-size:12px;font-weight:700;margin-bottom:10px;color:var(--text);
+    cursor:pointer;display:flex;align-items:center;gap:6px}
+  #legend h3 .arrow{transition:transform .3s;font-size:10px}
+  #legend.collapsed h3 .arrow{transform:rotate(180deg)}
+  .legend-item{
+    display:flex;align-items:center;gap:8px;padding:3px 0;font-size:11px;color:var(--text-muted);
+    cursor:pointer;transition:opacity .2s;
+  }
+  .legend-item:hover{color:var(--text)}
+  .legend-item.dimmed{opacity:0.3}
+  .legend-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+  .legend-count{margin-left:auto;font-size:10px;color:var(--text-dim);font-family:'JetBrains Mono',monospace}
+
+  /* ─── Minimap ─── */
+  #minimap{
+    position:fixed;bottom:20px;right:20px;z-index:100;
+    width:200px;height:140px;
+    background:rgba(17,24,39,0.9);backdrop-filter:blur(12px);
+    border:1px solid var(--border);border-radius:var(--radius);
+    box-shadow:var(--shadow);overflow:hidden;
+  }
+  #minimap canvas{width:100%;height:100%}
+  #minimap .viewport-rect{
+    position:absolute;border:1.5px solid var(--mod1);border-radius:2px;
+    background:rgba(99,102,241,0.08);pointer-events:none;
+  }
+
+  /* ─── Zoom Controls ─── */
+  #zoom-controls{
+    position:fixed;bottom:20px;right:240px;z-index:100;
+    display:flex;gap:4px;
+  }
+  #zoom-controls button{
+    width:34px;height:34px;border-radius:8px;border:1px solid var(--border);
+    background:rgba(17,24,39,0.9);backdrop-filter:blur(12px);
+    color:var(--text);font-size:16px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    transition:all .2s;font-family:inherit;
+  }
+  #zoom-controls button:hover{background:var(--mod1);border-color:var(--mod1)}
+  #zoom-label{
+    position:fixed;bottom:58px;right:240px;z-index:100;
+    font-size:10px;color:var(--text-dim);font-family:'JetBrains Mono',monospace;
+    background:rgba(17,24,39,0.9);padding:2px 8px;border-radius:4px;
+    border:1px solid var(--border);
+  }
+
+  /* ─── Cardinality Labels ─── */
+  .card-label{
+    position:absolute;font-size:10px;font-weight:700;
+    font-family:'JetBrains Mono',monospace;
+    color:var(--text-muted);background:var(--bg);
+    padding:1px 4px;border-radius:3px;z-index:5;pointer-events:none;
+  }
+</style>
+</head>
+<body>
+
+<!-- Toolbar -->
+<div id="toolbar">
+  <h1>⚖️ Forensic Medicine Department — ER Diagram</h1>
+  <div class="sep"></div>
+  <span class="info" id="table-count">25 Tables · 49 Relationships</span>
+  <div class="toolbar-btns">
+    <button onclick="resetView()" title="Reset zoom and position">⌂ Reset</button>
+    <button onclick="fitAll()" title="Fit all tables in view">⊞ Fit All</button>
+    <button onclick="toggleLabels()" id="btn-labels" class="active" title="Toggle relationship labels">Labels</button>
+  </div>
+</div>
+
+<!-- Viewport -->
+<div id="viewport">
+  <div id="canvas">
+    <svg id="rel-svg"></svg>
+  </div>
+</div>
+
+<!-- Legend -->
+<div id="legend">
+  <h3 onclick="toggleLegend()"><span class="arrow">▼</span> Modules</h3>
+  <div id="legend-items"></div>
+</div>
+
+<!-- Zoom Controls -->
+<div id="zoom-controls">
+  <button onclick="zoomIn()" title="Zoom in">+</button>
+  <button onclick="zoomOut()" title="Zoom out">−</button>
+</div>
+<div id="zoom-label">100%</div>
+
+<!-- Minimap -->
+<div id="minimap">
+  <canvas id="minimap-canvas" width="400" height="280"></canvas>
+  <div class="viewport-rect" id="minimap-vp"></div>
+</div>
+
+<script>
+// ═════════════════════════════════════════════════════════════════
+// DATA: All 25 tables with attributes
+// ═════════════════════════════════════════════════════════════════
+
+const MODULES = [
+  {id:'core',     name:'Patient & Case Management', color:'#6366f1', icon:'📋'},
+  {id:'clinical', name:'Clinical Forensic',          color:'#06b6d4', icon:'🏥'},
+  {id:'autopsy',  name:'Autopsy Component',          color:'#ef4444', icon:'🔬'},
+  {id:'evidence', name:'Evidence & Investigations',   color:'#f59e0b', icon:'🔍'},
+  {id:'court',    name:'Court & Legal',               color:'#a855f7', icon:'⚖️'},
+  {id:'staff',    name:'Staff & Doctors',             color:'#10b981', icon:'👨‍⚕️'},
+  {id:'auth',     name:'Authentication & Security',   color:'#3b82f6', icon:'🔐'},
+  {id:'docs',     name:'Documents & Media',           color:'#ec4899', icon:'📁'},
+  {id:'notify',   name:'Notifications & Audit',       color:'#f97316', icon:'🔔'},
+  {id:'reports',  name:'Reports & Statistics',         color:'#84cc16', icon:'📊'},
+];
+
+const TABLES = [
+  // ── Module: core ──
+  {id:'Patient', module:'core', x:200, y:380, cols:[
+    {name:'PatientID',      type:'INT',         pk:true},
+    {name:'FirstName',      type:'VARCHAR(100)'},
+    {name:'LastName',       type:'VARCHAR(100)'},
+    {name:'DateOfBirth',    type:'DATE'},
+    {name:'Age',            type:'INT'},
+    {name:'Gender',         type:'ENUM'},
+    {name:'NIC',            type:'VARCHAR(20)'},
+    {name:'Address',        type:'TEXT'},
+    {name:'Phone',          type:'VARCHAR(15)'},
+    {name:'EmergencyContact',type:'VARCHAR(15)'},
+    {name:'BloodGroup',     type:'VARCHAR(5)'},
+    {name:'RegisteredDate', type:'DATETIME'},
+  ]},
+  {id:'Case', module:'core', x:900, y:340, cols:[
+    {name:'CaseID',          type:'INT',         pk:true},
+    {name:'CaseNumber',      type:'VARCHAR(50)'},
+    {name:'CaseType',        type:'ENUM'},
+    {name:'SubCategory',     type:'VARCHAR(100)'},
+    {name:'IncidentDate',    type:'DATE'},
+    {name:'IncidentLocation',type:'TEXT'},
+    {name:'Description',     type:'TEXT'},
+    {name:'Status',          type:'ENUM'},
+    {name:'PatientID',       type:'INT',         fk:'Patient'},
+    {name:'AssignedDoctorID',type:'INT',         fk:'Doctor'},
+    {name:'CreatedBy',       type:'INT',         fk:'User'},
+    {name:'CreatedAt',       type:'DATETIME'},
+    {name:'UpdatedAt',       type:'DATETIME'},
+  ]},
+  {id:'CaseHistory', module:'core', x:1600, y:380, cols:[
+    {name:'HistoryID',        type:'INT',    pk:true},
+    {name:'CaseID',           type:'INT',    fk:'Case'},
+    {name:'ActionDate',       type:'DATETIME'},
+    {name:'ActionDescription',type:'TEXT'},
+    {name:'ActionBy',         type:'INT',    fk:'User'},
+  ]},
+
+  // ── Module: clinical ──
+  {id:'MedicoLegalExamForm', module:'clinical', x:80, y:850, cols:[
+    {name:'MLEFID',            type:'INT',         pk:true},
+    {name:'MLEFNumber',        type:'VARCHAR(50)'},
+    {name:'CaseID',            type:'INT',         fk:'Case'},
+    {name:'PatientID',         type:'INT',         fk:'Patient'},
+    {name:'ExaminingDoctorID', type:'INT',         fk:'Doctor'},
+    {name:'ExaminationDate',   type:'DATETIME'},
+    {name:'ReferralSource',    type:'VARCHAR(200)'},
+    {name:'LegalAuthorization',type:'VARCHAR(200)'},
+    {name:'ClinicalFindings',  type:'TEXT'},
+    {name:'Injuries',          type:'TEXT'},
+    {name:'Opinion',           type:'TEXT'},
+    {name:'Status',            type:'ENUM'},
+    {name:'IssuedDate',        type:'DATE'},
+    {name:'PoliceCopyIssued',  type:'BOOLEAN'},
+  ]},
+  {id:'MedicoLegalReport', module:'clinical', x:500, y:850, cols:[
+    {name:'MLRID',              type:'INT',         pk:true},
+    {name:'MLRNumber',          type:'VARCHAR(50)'},
+    {name:'MLEFID',             type:'INT',         fk:'MedicoLegalExamForm'},
+    {name:'CaseID',             type:'INT',         fk:'Case'},
+    {name:'PreparedBy',         type:'INT',         fk:'Doctor'},
+    {name:'ReportDate',         type:'DATE'},
+    {name:'ReportContent',      type:'TEXT'},
+    {name:'Conclusion',         type:'TEXT'},
+    {name:'Status',             type:'ENUM'},
+    {name:'CertificateOfReceipt',type:'VARCHAR(100)'},
+  ]},
+  {id:'Referral', module:'clinical', x:80, y:1350, cols:[
+    {name:'ReferralID',       type:'INT',    pk:true},
+    {name:'CaseID',           type:'INT',    fk:'Case'},
+    {name:'MLEFID',           type:'INT',    fk:'MedicoLegalExamForm'},
+    {name:'ReferredTo',       type:'VARCHAR(200)'},
+    {name:'ReferralDate',     type:'DATE'},
+    {name:'ReferralReason',   type:'TEXT'},
+    {name:'ResponseReceived', type:'BOOLEAN'},
+    {name:'ResponseDate',     type:'DATE'},
+    {name:'ResponseFindings', type:'TEXT'},
+  ]},
+  {id:'ReviewAppointment', module:'clinical', x:500, y:1350, cols:[
+    {name:'ReviewID',     type:'INT',    pk:true},
+    {name:'CaseID',       type:'INT',    fk:'Case'},
+    {name:'PatientID',    type:'INT',    fk:'Patient'},
+    {name:'ReviewType',   type:'ENUM'},
+    {name:'ScheduledDate',type:'DATETIME'},
+    {name:'DoctorID',     type:'INT',    fk:'Doctor'},
+    {name:'ReviewNotes',  type:'TEXT'},
+    {name:'Status',       type:'ENUM'},
+  ]},
+
+  // ── Module: autopsy ──
+  {id:'Postmortem', module:'autopsy', x:1650, y:850, cols:[
+    {name:'PostmortemID',      type:'INT',         pk:true},
+    {name:'PMNumber',          type:'VARCHAR(50)'},
+    {name:'CaseID',            type:'INT',         fk:'Case'},
+    {name:'DeceasedPatientID', type:'INT',         fk:'Patient'},
+    {name:'DeathType',         type:'ENUM'},
+    {name:'DeathSource',       type:'ENUM'},
+    {name:'AutopsyDate',       type:'DATETIME'},
+    {name:'PerformingDoctorID',type:'INT',         fk:'Doctor'},
+    {name:'PreAutopsyInfo',    type:'TEXT'},
+    {name:'ExternalFindings',  type:'TEXT'},
+    {name:'InternalFindings',  type:'TEXT'},
+    {name:'PMRContent',        type:'TEXT'},
+    {name:'Status',            type:'ENUM'},
+  ]},
+  {id:'CauseOfDeath', module:'autopsy', x:2100, y:850, cols:[
+    {name:'CODID',                   type:'INT',         pk:true},
+    {name:'PostmortemID',            type:'INT',         fk:'Postmortem'},
+    {name:'ImmediateCause',          type:'VARCHAR(500)'},
+    {name:'AntecedentCause1',        type:'VARCHAR(500)'},
+    {name:'AntecedentCause2',        type:'VARCHAR(500)'},
+    {name:'UnderlyingCause',         type:'VARCHAR(500)'},
+    {name:'OtherSignificantCond',    type:'TEXT'},
+    {name:'MannerOfDeath',           type:'ENUM'},
+    {name:'IssuedDate',              type:'DATE'},
+    {name:'IssuedBy',                type:'INT',         fk:'Doctor'},
+  ]},
+  {id:'InquestOrder', module:'autopsy', x:2100, y:1350, cols:[
+    {name:'OrderID',      type:'INT',         pk:true},
+    {name:'CaseID',       type:'INT',         fk:'Case'},
+    {name:'PostmortemID', type:'INT',         fk:'Postmortem'},
+    {name:'OrderType',    type:'ENUM'},
+    {name:'OrderNumber',  type:'VARCHAR(50)'},
+    {name:'IssuedBy',     type:'VARCHAR(200)'},
+    {name:'IssuedDate',   type:'DATE'},
+    {name:'OrderDocument',type:'VARCHAR(500)'},
+  ]},
+
+  // ── Module: evidence ──
+  {id:'Evidence', module:'evidence', x:200, y:1830, cols:[
+    {name:'EvidenceID',           type:'INT',         pk:true},
+    {name:'CaseID',               type:'INT',         fk:'Case'},
+    {name:'EvidenceType',         type:'VARCHAR(100)'},
+    {name:'Description',          type:'TEXT'},
+    {name:'CollectedDate',        type:'DATETIME'},
+    {name:'CollectedBy',          type:'INT',         fk:'Staff'},
+    {name:'StorageLocation',      type:'VARCHAR(200)'},
+    {name:'BarcodeQR',            type:'VARCHAR(200)'},
+    {name:'ChainOfCustodyStatus', type:'ENUM'},
+  ]},
+  {id:'ChainOfCustody', module:'evidence', x:650, y:1830, cols:[
+    {name:'CustodyID',       type:'INT',    pk:true},
+    {name:'EvidenceID',      type:'INT',    fk:'Evidence'},
+    {name:'TransferredFrom', type:'INT',    fk:'Staff'},
+    {name:'TransferredTo',   type:'INT',    fk:'Staff'},
+    {name:'TransferDate',    type:'DATETIME'},
+    {name:'Purpose',         type:'TEXT'},
+    {name:'Remarks',         type:'TEXT'},
+  ]},
+  {id:'LaboratoryTest', module:'evidence', x:1080, y:1830, cols:[
+    {name:'TestID',         type:'INT',         pk:true},
+    {name:'CaseID',         type:'INT',         fk:'Case'},
+    {name:'EvidenceID',     type:'INT',         fk:'Evidence'},
+    {name:'TestType',       type:'VARCHAR(100)'},
+    {name:'RequestedBy',    type:'INT',         fk:'Doctor'},
+    {name:'RequestDate',    type:'DATE'},
+    {name:'LabStaffID',     type:'INT',         fk:'Staff'},
+    {name:'Result',         type:'TEXT'},
+    {name:'ResultDate',     type:'DATE'},
+    {name:'Status',         type:'ENUM'},
+    {name:'ReportFilePath', type:'VARCHAR(500)'},
+  ]},
+
+  // ── Module: court ──
+  {id:'CourtReport', module:'court', x:1600, y:1830, cols:[
+    {name:'ReportID',        type:'INT',         pk:true},
+    {name:'CaseID',          type:'INT',         fk:'Case'},
+    {name:'ReportType',      type:'VARCHAR(100)'},
+    {name:'PreparedBy',      type:'INT',         fk:'Doctor'},
+    {name:'SubmissionDate',  type:'DATE'},
+    {name:'CourtName',       type:'VARCHAR(200)'},
+    {name:'CaseNumberCourt', type:'VARCHAR(100)'},
+    {name:'Status',          type:'ENUM'},
+    {name:'ReportContent',   type:'TEXT'},
+    {name:'DigitalSignature',type:'VARCHAR(500)'},
+  ]},
+  {id:'CourtSummons', module:'court', x:2050, y:1830, cols:[
+    {name:'SummonsID',   type:'INT',         pk:true},
+    {name:'CaseID',      type:'INT',         fk:'Case'},
+    {name:'DoctorID',    type:'INT',         fk:'Doctor'},
+    {name:'CourtName',   type:'VARCHAR(200)'},
+    {name:'HearingDate', type:'DATETIME'},
+    {name:'SummonsDate', type:'DATE'},
+    {name:'Purpose',     type:'TEXT'},
+    {name:'Status',      type:'ENUM'},
+  ]},
+
+  // ── Module: staff ──
+  {id:'Staff', module:'staff', x:2100, y:50, cols:[
+    {name:'StaffID',   type:'INT',         pk:true},
+    {name:'FirstName', type:'VARCHAR(100)'},
+    {name:'LastName',  type:'VARCHAR(100)'},
+    {name:'Role',      type:'ENUM'},
+    {name:'Department',type:'VARCHAR(100)'},
+    {name:'Phone',     type:'VARCHAR(15)'},
+    {name:'Email',     type:'VARCHAR(150)'},
+    {name:'HireDate',  type:'DATE'},
+    {name:'IsActive',  type:'BOOLEAN'},
+  ]},
+  {id:'Doctor', module:'staff', x:2500, y:50, cols:[
+    {name:'DoctorID',       type:'INT',         pk:true},
+    {name:'StaffID',        type:'INT',         fk:'Staff'},
+    {name:'MedicalRegNo',   type:'VARCHAR(50)'},
+    {name:'Specialization', type:'VARCHAR(100)'},
+    {name:'Designation',    type:'VARCHAR(100)'},
+    {name:'Qualifications', type:'TEXT'},
+  ]},
+
+  // ── Module: auth ──
+  {id:'User', module:'auth', x:200, y:50, cols:[
+    {name:'UserID',       type:'INT',         pk:true},
+    {name:'Username',     type:'VARCHAR(50)'},
+    {name:'PasswordHash', type:'VARCHAR(255)'},
+    {name:'StaffID',      type:'INT',         fk:'Staff'},
+    {name:'RoleID',       type:'INT',         fk:'Role'},
+    {name:'IsActive',     type:'BOOLEAN'},
+    {name:'LastLogin',    type:'DATETIME'},
+    {name:'CreatedAt',    type:'DATETIME'},
+  ]},
+  {id:'Role', module:'auth', x:650, y:50, cols:[
+    {name:'RoleID',     type:'INT',         pk:true},
+    {name:'RoleName',   type:'VARCHAR(50)'},
+    {name:'Description',type:'TEXT'},
+  ]},
+  {id:'RolePermission', module:'auth', x:1050, y:50, cols:[
+    {name:'PermissionID',type:'INT',    pk:true},
+    {name:'RoleID',      type:'INT',    fk:'Role'},
+    {name:'Module',      type:'VARCHAR(100)'},
+    {name:'CanCreate',   type:'BOOLEAN'},
+    {name:'CanRead',     type:'BOOLEAN'},
+    {name:'CanUpdate',   type:'BOOLEAN'},
+    {name:'CanDelete',   type:'BOOLEAN'},
+  ]},
+
+  // ── Module: docs ──
+  {id:'Document', module:'docs', x:200, y:2350, cols:[
+    {name:'DocumentID',  type:'INT',         pk:true},
+    {name:'CaseID',      type:'INT',         fk:'Case'},
+    {name:'DocumentType',type:'VARCHAR(100)'},
+    {name:'FilePath',    type:'VARCHAR(500)'},
+    {name:'UploadedBy',  type:'INT',         fk:'User'},
+    {name:'UploadedAt',  type:'DATETIME'},
+    {name:'Description', type:'TEXT'},
+  ]},
+  {id:'Photograph', module:'docs', x:650, y:2350, cols:[
+    {name:'PhotoID',     type:'INT',    pk:true},
+    {name:'CaseID',      type:'INT',    fk:'Case'},
+    {name:'PostmortemID',type:'INT',    fk:'Postmortem'},
+    {name:'PhotoType',   type:'ENUM'},
+    {name:'FilePath',    type:'VARCHAR(500)'},
+    {name:'Caption',     type:'TEXT'},
+    {name:'TakenDate',   type:'DATETIME'},
+    {name:'TakenBy',     type:'INT',    fk:'Staff'},
+  ]},
+
+  // ── Module: notify ──
+  {id:'Notification', module:'notify', x:1200, y:2350, cols:[
+    {name:'NotificationID',  type:'INT',    pk:true},
+    {name:'UserID',          type:'INT',    fk:'User'},
+    {name:'Title',           type:'VARCHAR(200)'},
+    {name:'Message',         type:'TEXT'},
+    {name:'NotificationType',type:'ENUM'},
+    {name:'RelatedCaseID',   type:'INT',    fk:'Case'},
+    {name:'IsRead',          type:'BOOLEAN'},
+    {name:'CreatedAt',       type:'DATETIME'},
+  ]},
+  {id:'AuditLog', module:'notify', x:1650, y:2350, cols:[
+    {name:'LogID',        type:'INT',    pk:true},
+    {name:'UserID',       type:'INT',    fk:'User'},
+    {name:'Action',       type:'VARCHAR(50)'},
+    {name:'TableAffected',type:'VARCHAR(100)'},
+    {name:'RecordID',     type:'INT'},
+    {name:'OldValue',     type:'TEXT'},
+    {name:'NewValue',     type:'TEXT'},
+    {name:'IPAddress',    type:'VARCHAR(45)'},
+    {name:'Timestamp',    type:'DATETIME'},
+  ]},
+
+  // ── Module: reports ──
+  {id:'ReportTemplate', module:'reports', x:2150, y:2350, cols:[
+    {name:'TemplateID',     type:'INT',         pk:true},
+    {name:'TemplateName',   type:'VARCHAR(200)'},
+    {name:'TemplateType',   type:'ENUM'},
+    {name:'TemplateContent',type:'TEXT'},
+    {name:'CreatedBy',      type:'INT',         fk:'User'},
+    {name:'CreatedAt',      type:'DATETIME'},
+    {name:'IsActive',       type:'BOOLEAN'},
+  ]},
+];
+
+// ═════════════════════════════════════════════════════════════════
+// RELATIONSHIPS (from FK → referenced PK)
+// ═════════════════════════════════════════════════════════════════
+
+const RELATIONSHIPS = [
+  // Case relationships
+  {from:'Case',       fromCol:'PatientID',        to:'Patient',             toCol:'PatientID',    card:'M:1', label:'has'},
+  {from:'Case',       fromCol:'AssignedDoctorID',  to:'Doctor',              toCol:'DoctorID',     card:'M:1', label:'assigned to'},
+  {from:'Case',       fromCol:'CreatedBy',         to:'User',                toCol:'UserID',       card:'M:1', label:'created by'},
+  // CaseHistory
+  {from:'CaseHistory',fromCol:'CaseID',            to:'Case',                toCol:'CaseID',       card:'M:1', label:'tracks'},
+  {from:'CaseHistory',fromCol:'ActionBy',           to:'User',                toCol:'UserID',       card:'M:1', label:'acted by'},
+  // MLEF
+  {from:'MedicoLegalExamForm',fromCol:'CaseID',     to:'Case',                toCol:'CaseID',       card:'M:1', label:'for case'},
+  {from:'MedicoLegalExamForm',fromCol:'PatientID',   to:'Patient',             toCol:'PatientID',    card:'M:1', label:'examines'},
+  {from:'MedicoLegalExamForm',fromCol:'ExaminingDoctorID', to:'Doctor',        toCol:'DoctorID',     card:'M:1', label:'examined by'},
+  // MLR
+  {from:'MedicoLegalReport',fromCol:'MLEFID',        to:'MedicoLegalExamForm', toCol:'MLEFID',       card:'1:1', label:'from MLEF'},
+  {from:'MedicoLegalReport',fromCol:'CaseID',         to:'Case',                toCol:'CaseID',       card:'M:1', label:'for case'},
+  {from:'MedicoLegalReport',fromCol:'PreparedBy',     to:'Doctor',              toCol:'DoctorID',     card:'M:1', label:'prepared by'},
+  // Referral
+  {from:'Referral',   fromCol:'CaseID',             to:'Case',                toCol:'CaseID',       card:'M:1', label:'for case'},
+  {from:'Referral',   fromCol:'MLEFID',             to:'MedicoLegalExamForm', toCol:'MLEFID',       card:'M:1', label:'from MLEF'},
+  // ReviewAppointment
+  {from:'ReviewAppointment',fromCol:'CaseID',        to:'Case',                toCol:'CaseID',       card:'M:1', label:'for case'},
+  {from:'ReviewAppointment',fromCol:'PatientID',      to:'Patient',             toCol:'PatientID',    card:'M:1', label:'for patient'},
+  {from:'ReviewAppointment',fromCol:'DoctorID',       to:'Doctor',              toCol:'DoctorID',     card:'M:1', label:'reviewed by'},
+  // Postmortem
+  {from:'Postmortem', fromCol:'CaseID',              to:'Case',                toCol:'CaseID',       card:'1:1', label:'for case'},
+  {from:'Postmortem', fromCol:'DeceasedPatientID',    to:'Patient',             toCol:'PatientID',    card:'M:1', label:'deceased'},
+  {from:'Postmortem', fromCol:'PerformingDoctorID',   to:'Doctor',              toCol:'DoctorID',     card:'M:1', label:'performed by'},
+  // CauseOfDeath
+  {from:'CauseOfDeath',fromCol:'PostmortemID',        to:'Postmortem',          toCol:'PostmortemID', card:'1:1', label:'cause'},
+  {from:'CauseOfDeath',fromCol:'IssuedBy',            to:'Doctor',              toCol:'DoctorID',     card:'M:1', label:'issued by'},
+  // InquestOrder
+  {from:'InquestOrder',fromCol:'CaseID',              to:'Case',                toCol:'CaseID',       card:'M:1', label:'for case'},
+  {from:'InquestOrder',fromCol:'PostmortemID',         to:'Postmortem',          toCol:'PostmortemID', card:'1:1', label:'authorizes'},
+  // Evidence
+  {from:'Evidence',   fromCol:'CaseID',              to:'Case',                toCol:'CaseID',       card:'M:1', label:'for case'},
+  {from:'Evidence',   fromCol:'CollectedBy',          to:'Staff',               toCol:'StaffID',      card:'M:1', label:'collected by'},
+  // ChainOfCustody
+  {from:'ChainOfCustody',fromCol:'EvidenceID',        to:'Evidence',            toCol:'EvidenceID',   card:'M:1', label:'tracks'},
+  {from:'ChainOfCustody',fromCol:'TransferredFrom',   to:'Staff',               toCol:'StaffID',      card:'M:1', label:'from staff'},
+  {from:'ChainOfCustody',fromCol:'TransferredTo',     to:'Staff',               toCol:'StaffID',      card:'M:1', label:'to staff'},
+  // LaboratoryTest
+  {from:'LaboratoryTest',fromCol:'CaseID',            to:'Case',                toCol:'CaseID',       card:'M:1', label:'for case'},
+  {from:'LaboratoryTest',fromCol:'EvidenceID',         to:'Evidence',            toCol:'EvidenceID',   card:'M:1', label:'tests'},
+  {from:'LaboratoryTest',fromCol:'RequestedBy',        to:'Doctor',              toCol:'DoctorID',     card:'M:1', label:'requested by'},
+  {from:'LaboratoryTest',fromCol:'LabStaffID',         to:'Staff',               toCol:'StaffID',      card:'M:1', label:'performed by'},
+  // CourtReport
+  {from:'CourtReport',fromCol:'CaseID',               to:'Case',                toCol:'CaseID',       card:'M:1', label:'for case'},
+  {from:'CourtReport',fromCol:'PreparedBy',            to:'Doctor',              toCol:'DoctorID',     card:'M:1', label:'prepared by'},
+  // CourtSummons
+  {from:'CourtSummons',fromCol:'CaseID',              to:'Case',                toCol:'CaseID',       card:'M:1', label:'for case'},
+  {from:'CourtSummons',fromCol:'DoctorID',             to:'Doctor',              toCol:'DoctorID',     card:'M:1', label:'summoned'},
+  // Doctor → Staff
+  {from:'Doctor',     fromCol:'StaffID',              to:'Staff',               toCol:'StaffID',      card:'1:1', label:'is staff'},
+  // User
+  {from:'User',       fromCol:'StaffID',              to:'Staff',               toCol:'StaffID',      card:'1:1', label:'is staff'},
+  {from:'User',       fromCol:'RoleID',               to:'Role',                toCol:'RoleID',       card:'M:1', label:'has role'},
+  // RolePermission
+  {from:'RolePermission',fromCol:'RoleID',            to:'Role',                toCol:'RoleID',       card:'M:1', label:'for role'},
+  // Document
+  {from:'Document',   fromCol:'CaseID',              to:'Case',                toCol:'CaseID',       card:'M:1', label:'for case'},
+  {from:'Document',   fromCol:'UploadedBy',           to:'User',                toCol:'UserID',       card:'M:1', label:'uploaded by'},
+  // Photograph
+  {from:'Photograph', fromCol:'CaseID',              to:'Case',                toCol:'CaseID',       card:'M:1', label:'for case'},
+  {from:'Photograph', fromCol:'PostmortemID',          to:'Postmortem',          toCol:'PostmortemID', card:'M:1', label:'of PM'},
+  {from:'Photograph', fromCol:'TakenBy',              to:'Staff',               toCol:'StaffID',      card:'M:1', label:'taken by'},
+  // Notification
+  {from:'Notification',fromCol:'UserID',              to:'User',                toCol:'UserID',       card:'M:1', label:'for user'},
+  {from:'Notification',fromCol:'RelatedCaseID',       to:'Case',                toCol:'CaseID',       card:'M:1', label:'about case'},
+  // AuditLog
+  {from:'AuditLog',   fromCol:'UserID',              to:'User',                toCol:'UserID',       card:'M:1', label:'by user'},
+  // ReportTemplate
+  {from:'ReportTemplate',fromCol:'CreatedBy',         to:'User',                toCol:'UserID',       card:'M:1', label:'created by'},
+];
+
+
+// ═════════════════════════════════════════════════════════════════
+// STATE
+// ═════════════════════════════════════════════════════════════════
+let scale = 0.55, tx = 50, ty = 20;
+let showLabels = true;
+let dragging = null, panning = false;
+let panStart = {x:0,y:0}, panOffset = {x:0,y:0};
+const tableEls = {};
+const moduleVisible = {};
+MODULES.forEach(m => moduleVisible[m.id] = true);
+
+// ═════════════════════════════════════════════════════════════════
+// RENDER TABLES
+// ═════════════════════════════════════════════════════════════════
+const canvas = document.getElementById('canvas');
+
+function renderTables() {
+  TABLES.forEach(t => {
+    const mod = MODULES.find(m => m.id === t.module);
+    const card = document.createElement('div');
+    card.className = 'table-card';
+    card.id = 'table-' + t.id;
+    card.dataset.module = t.module;
+    card.dataset.tableId = t.id;
+    card.style.left = t.x + 'px';
+    card.style.top = t.y + 'px';
+
+    // Header
+    const header = document.createElement('div');
+    header.className = 'table-header';
+    header.style.background = `linear-gradient(135deg, ${mod.color}, ${mod.color}cc)`;
+    header.innerHTML = `<span class="icon">${mod.icon}</span> ${t.id}`;
+    card.appendChild(header);
+
+    // Columns
+    const colsDiv = document.createElement('div');
+    colsDiv.className = 'table-cols';
+    t.cols.forEach(c => {
+      const row = document.createElement('div');
+      row.className = 'col-row';
+      let marker = '';
+      if (c.pk && c.fk) marker = '<span class="col-marker pfk">PFK</span>';
+      else if (c.pk) marker = '<span class="col-marker pk">PK</span>';
+      else if (c.fk) marker = '<span class="col-marker fk">FK</span>';
+      else marker = '<span class="col-marker" style="opacity:0">──</span>';
+      row.innerHTML = `${marker}<span class="col-name">${c.name}</span><span class="col-type">${c.type}</span>`;
+      colsDiv.appendChild(row);
+    });
+    card.appendChild(colsDiv);
+
+    // Hover highlight
+    card.addEventListener('mouseenter', () => highlightTable(t.id, true));
+    card.addEventListener('mouseleave', () => highlightTable(t.id, false));
+
+    // Drag
+    header.addEventListener('mousedown', e => startDrag(e, t));
+
+    canvas.appendChild(card);
+    tableEls[t.id] = card;
+  });
+}
+
+// ═════════════════════════════════════════════════════════════════
+// RENDER RELATIONSHIPS (SVG)
+// ═════════════════════════════════════════════════════════════════
+const svg = document.getElementById('rel-svg');
+
+function getTableRect(id) {
+  const el = tableEls[id];
+  if (!el) return null;
+  const t = TABLES.find(tb => tb.id === id);
+  const w = el.offsetWidth;
+  const h = el.offsetHeight;
+  return {x: t.x, y: t.y, w, h, cx: t.x + w/2, cy: t.y + h/2};
+}
+
+function getEdgePoint(rect, targetX, targetY) {
+  const dx = targetX - rect.cx;
+  const dy = targetY - rect.cy;
+  const absDx = Math.abs(dx);
+  const absDy = Math.abs(dy);
+
+  let ex, ey;
+  if (absDx * rect.h > absDy * rect.w) {
+    // Exit from left or right
+    ex = dx > 0 ? rect.x + rect.w : rect.x;
+    ey = rect.cy + (dy * Math.abs(ex - rect.cx)) / absDx;
+  } else {
+    // Exit from top or bottom
+    ey = dy > 0 ? rect.y + rect.h : rect.y;
+    ex = rect.cx + (dx * Math.abs(ey - rect.cy)) / absDy;
+  }
+  return {x: ex, y: ey};
+}
+
+function drawRelationships() {
+  svg.innerHTML = '';
+  RELATIONSHIPS.forEach((rel, i) => {
+    const fromRect = getTableRect(rel.from);
+    const toRect = getTableRect(rel.to);
+    if (!fromRect || !toRect) return;
+
+    const fromMod = TABLES.find(t=>t.id===rel.from)?.module;
+    const toMod = TABLES.find(t=>t.id===rel.to)?.module;
+    if (!moduleVisible[fromMod] || !moduleVisible[toMod]) return;
+
+    const fromColor = MODULES.find(m => m.id === fromMod)?.color || '#64748b';
+
+    const fromPt = getEdgePoint(fromRect, toRect.cx, toRect.cy);
+    const toPt = getEdgePoint(toRect, fromRect.cx, fromRect.cy);
+
+    const dx = toPt.x - fromPt.x;
+    const dy = toPt.y - fromPt.y;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+    const cp = dist * 0.3;
+
+    let c1x, c1y, c2x, c2y;
+    if (Math.abs(dx) > Math.abs(dy)) {
+      c1x = fromPt.x + dx*0.3; c1y = fromPt.y;
+      c2x = toPt.x - dx*0.3; c2y = toPt.y;
+    } else {
+      c1x = fromPt.x; c1y = fromPt.y + dy*0.3;
+      c2x = toPt.x; c2y = toPt.y - dy*0.3;
+    }
+
+    const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d', `M ${fromPt.x} ${fromPt.y} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${toPt.x} ${toPt.y}`);
+    path.setAttribute('stroke', fromColor);
+    path.dataset.from = rel.from;
+    path.dataset.to = rel.to;
+    path.dataset.index = i;
+    svg.appendChild(path);
+
+    // Cardinality label
+    if (showLabels) {
+      const midX = (fromPt.x + toPt.x) / 2;
+      const midY = (fromPt.y + toPt.y) / 2;
+      const text = document.createElementNS('http://www.w3.org/2000/svg','text');
+      text.setAttribute('x', midX);
+      text.setAttribute('y', midY - 6);
+      text.setAttribute('text-anchor', 'middle');
+      text.setAttribute('fill', fromColor);
+      text.textContent = rel.card;
+      text.style.opacity = '0.7';
+      text.style.fontSize = '10px';
+      svg.appendChild(text);
+    }
+
+    // Markers: draw small circles at endpoints
+    [fromPt, toPt].forEach(pt => {
+      const circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
+      circle.setAttribute('cx', pt.x);
+      circle.setAttribute('cy', pt.y);
+      circle.setAttribute('r', '3');
+      circle.setAttribute('fill', fromColor);
+      circle.style.opacity = '0.6';
+      svg.appendChild(circle);
+    });
+  });
+}
+
+// ═════════════════════════════════════════════════════════════════
+// HIGHLIGHT ON HOVER
+// ═════════════════════════════════════════════════════════════════
+function highlightTable(tableId, on) {
+  // Highlight connected paths
+  svg.querySelectorAll('path').forEach(p => {
+    if (p.dataset.from === tableId || p.dataset.to === tableId) {
+      p.classList.toggle('highlighted', on);
+    }
+  });
+  // Highlight connected tables
+  if (on) {
+    RELATIONSHIPS.forEach(r => {
+      if (r.from === tableId && tableEls[r.to]) tableEls[r.to].classList.add('highlight');
+      if (r.to === tableId && tableEls[r.from]) tableEls[r.from].classList.add('highlight');
+    });
+    if (tableEls[tableId]) tableEls[tableId].classList.add('highlight');
+  } else {
+    Object.values(tableEls).forEach(el => el.classList.remove('highlight'));
+  }
+}
+
+// ═════════════════════════════════════════════════════════════════
+// DRAG, PAN, ZOOM
+// ═════════════════════════════════════════════════════════════════
+function startDrag(e, table) {
+  e.stopPropagation();
+  dragging = {table, startX: e.clientX, startY: e.clientY, origX: table.x, origY: table.y};
+}
+
+const viewport = document.getElementById('viewport');
+
+viewport.addEventListener('mousedown', e => {
+  if (dragging) return;
+  panning = true;
+  panStart = {x: e.clientX, y: e.clientY};
+  panOffset = {x: tx, y: ty};
+  viewport.classList.add('grabbing');
+});
+
+document.addEventListener('mousemove', e => {
+  if (dragging) {
+    const dx = (e.clientX - dragging.startX) / scale;
+    const dy = (e.clientY - dragging.startY) / scale;
+    dragging.table.x = dragging.origX + dx;
+    dragging.table.y = dragging.origY + dy;
+    const el = tableEls[dragging.table.id];
+    el.style.left = dragging.table.x + 'px';
+    el.style.top = dragging.table.y + 'px';
+    drawRelationships();
+    updateMinimap();
+  } else if (panning) {
+    tx = panOffset.x + (e.clientX - panStart.x);
+    ty = panOffset.y + (e.clientY - panStart.y);
+    applyTransform();
+    updateMinimap();
+  }
+});
+
+document.addEventListener('mouseup', () => {
+  dragging = null;
+  panning = false;
+  viewport.classList.remove('grabbing');
+});
+
+viewport.addEventListener('wheel', e => {
+  e.preventDefault();
+  const rect = viewport.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+
+  const oldScale = scale;
+  const delta = e.deltaY > 0 ? 0.9 : 1.1;
+  scale = Math.min(2, Math.max(0.15, scale * delta));
+
+  // Zoom towards cursor
+  tx = mx - (mx - tx) * (scale / oldScale);
+  ty = my - (my - ty) * (scale / oldScale);
+
+  applyTransform();
+  updateMinimap();
+}, {passive: false});
+
+function applyTransform() {
+  canvas.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+  document.getElementById('zoom-label').textContent = Math.round(scale * 100) + '%';
+}
+
+function zoomIn() {
+  const rect = viewport.getBoundingClientRect();
+  const cx = rect.width/2, cy = rect.height/2;
+  const oldScale = scale;
+  scale = Math.min(2, scale * 1.2);
+  tx = cx - (cx - tx) * (scale / oldScale);
+  ty = cy - (cy - ty) * (scale / oldScale);
+  applyTransform(); updateMinimap();
+}
+function zoomOut() {
+  const rect = viewport.getBoundingClientRect();
+  const cx = rect.width/2, cy = rect.height/2;
+  const oldScale = scale;
+  scale = Math.max(0.15, scale / 1.2);
+  tx = cx - (cx - tx) * (scale / oldScale);
+  ty = cy - (cy - ty) * (scale / oldScale);
+  applyTransform(); updateMinimap();
+}
+function resetView() {
+  scale = 0.55; tx = 50; ty = 20;
+  applyTransform(); updateMinimap();
+}
+function fitAll() {
+  let minX=Infinity, minY=Infinity, maxX=-Infinity, maxY=-Infinity;
+  TABLES.forEach(t => {
+    const el = tableEls[t.id];
+    minX = Math.min(minX, t.x);
+    minY = Math.min(minY, t.y);
+    maxX = Math.max(maxX, t.x + (el?.offsetWidth||250));
+    maxY = Math.max(maxY, t.y + (el?.offsetHeight||200));
+  });
+  const vr = viewport.getBoundingClientRect();
+  const pad = 40;
+  const sw = (vr.width - pad*2) / (maxX - minX);
+  const sh = (vr.height - pad*2) / (maxY - minY);
+  scale = Math.min(sw, sh, 1.5);
+  tx = pad - minX * scale;
+  ty = pad - minY * scale;
+  applyTransform(); updateMinimap();
+}
+function toggleLabels() {
+  showLabels = !showLabels;
+  document.getElementById('btn-labels').classList.toggle('active', showLabels);
+  drawRelationships();
+}
+
+// ═════════════════════════════════════════════════════════════════
+// LEGEND
+// ═════════════════════════════════════════════════════════════════
+function renderLegend() {
+  const container = document.getElementById('legend-items');
+  MODULES.forEach(m => {
+    const count = TABLES.filter(t => t.module === m.id).length;
+    const item = document.createElement('div');
+    item.className = 'legend-item';
+    item.dataset.module = m.id;
+    item.innerHTML = `<span class="legend-dot" style="background:${m.color}"></span>
+      <span>${m.name}</span><span class="legend-count">${count}</span>`;
+    item.addEventListener('click', () => {
+      moduleVisible[m.id] = !moduleVisible[m.id];
+      item.classList.toggle('dimmed', !moduleVisible[m.id]);
+      TABLES.filter(t => t.module === m.id).forEach(t => {
+        tableEls[t.id].style.display = moduleVisible[m.id] ? '' : 'none';
+      });
+      drawRelationships();
+      updateMinimap();
+    });
+    container.appendChild(item);
+  });
+}
+function toggleLegend() {
+  document.getElementById('legend').classList.toggle('collapsed');
+}
+
+// ═════════════════════════════════════════════════════════════════
+// MINIMAP
+// ═════════════════════════════════════════════════════════════════
+const mmCanvas = document.getElementById('minimap-canvas');
+const mmCtx = mmCanvas.getContext('2d');
+
+function updateMinimap() {
+  const cw = mmCanvas.width, ch = mmCanvas.height;
+  mmCtx.clearRect(0, 0, cw, ch);
+
+  // Calculate bounds
+  let minX=Infinity, minY=Infinity, maxX=-Infinity, maxY=-Infinity;
+  TABLES.forEach(t => {
+    const el = tableEls[t.id];
+    if (!moduleVisible[t.module]) return;
+    minX = Math.min(minX, t.x);
+    minY = Math.min(minY, t.y);
+    maxX = Math.max(maxX, t.x + (el?.offsetWidth||250));
+    maxY = Math.max(maxY, t.y + (el?.offsetHeight||200));
+  });
+  const pad = 20;
+  minX -= pad; minY -= pad; maxX += pad; maxY += pad;
+  const worldW = maxX - minX, worldH = maxY - minY;
+  const s = Math.min(cw / worldW, ch / worldH);
+
+  // Draw relationships
+  mmCtx.strokeStyle = 'rgba(100,116,139,0.3)';
+  mmCtx.lineWidth = 0.5;
+  RELATIONSHIPS.forEach(rel => {
+    const ft = TABLES.find(t=>t.id===rel.from);
+    const tt = TABLES.find(t=>t.id===rel.to);
+    if (!ft || !tt || !moduleVisible[ft.module] || !moduleVisible[tt.module]) return;
+    const fe = tableEls[ft.id], te = tableEls[tt.id];
+    const fx = (ft.x + (fe?.offsetWidth||250)/2 - minX)*s;
+    const fy = (ft.y + (fe?.offsetHeight||200)/2 - minY)*s;
+    const tx2 = (tt.x + (te?.offsetWidth||250)/2 - minX)*s;
+    const ty2 = (tt.y + (te?.offsetHeight||200)/2 - minY)*s;
+    mmCtx.beginPath();
+    mmCtx.moveTo(fx, fy);
+    mmCtx.lineTo(tx2, ty2);
+    mmCtx.stroke();
+  });
+
+  // Draw tables
+  TABLES.forEach(t => {
+    if (!moduleVisible[t.module]) return;
+    const el = tableEls[t.id];
+    const mod = MODULES.find(m=>m.id===t.module);
+    const rx = (t.x - minX) * s;
+    const ry = (t.y - minY) * s;
+    const rw = (el?.offsetWidth||250) * s;
+    const rh = (el?.offsetHeight||200) * s;
+    mmCtx.fillStyle = mod.color + '80';
+    mmCtx.fillRect(rx, ry, Math.max(rw, 3), Math.max(rh, 3));
+  });
+
+  // Draw viewport rect
+  const vr = viewport.getBoundingClientRect();
+  const vpRect = document.getElementById('minimap-vp');
+  const vl = (-tx/scale - minX)*s;
+  const vt = (-ty/scale - minY)*s;
+  const vw = (vr.width/scale)*s;
+  const vh = (vr.height/scale)*s;
+  vpRect.style.left = Math.max(0,vl) + 'px';
+  vpRect.style.top = Math.max(0,vt) + 'px';
+  vpRect.style.width = vw + 'px';
+  vpRect.style.height = vh + 'px';
+}
+
+// ═════════════════════════════════════════════════════════════════
+// INIT
+// ═════════════════════════════════════════════════════════════════
+renderTables();
+renderLegend();
+applyTransform();
+// Wait for layout
+requestAnimationFrame(() => {
+  drawRelationships();
+  updateMinimap();
+});
+
+// Handle resize
+window.addEventListener('resize', () => { drawRelationships(); updateMinimap(); });
+
+document.getElementById('table-count').textContent = `${TABLES.length} Tables · ${RELATIONSHIPS.length} Relationships`;
+</script>
+</body>
+</html>
