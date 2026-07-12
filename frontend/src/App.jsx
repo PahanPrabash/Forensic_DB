@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import AppLayout from './layouts/AppLayout';
+import Home from './pages/Home';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Cases from './pages/Cases';
@@ -15,6 +16,8 @@ function App() {
   return (
     <Router>
       <Routes>
+        {/* Public pages */}
+        <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         
@@ -27,9 +30,6 @@ function App() {
           <Route path="/autopsy-pmr" element={<AutopsyForm />} />
           <Route path="/evidence" element={<Evidence />} />
           <Route path="/reports" element={<Reports />} />
-          
-          {/* Default redirect to dashboard */}
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Route>
       </Routes>
     </Router>
