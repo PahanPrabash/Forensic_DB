@@ -35,6 +35,16 @@ const AppLayout = () => {
             </NavLink>
           </div>
           <div className="nav-item">
+            <NavLink to="/mlr-report" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
+              <ion-icon name="reader-outline"></ion-icon> MLR Reports
+            </NavLink>
+          </div>
+          <div className="nav-item">
+            <NavLink to="/referrals" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
+              <ion-icon name="git-branch-outline"></ion-icon> Referrals & Reviews
+            </NavLink>
+          </div>
+          <div className="nav-item">
             <NavLink to="/autopsy-pmr" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
               <ion-icon name="flask-outline"></ion-icon> Autopsy (PMR)
             </NavLink>

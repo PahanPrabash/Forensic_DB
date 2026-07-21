@@ -7,6 +7,8 @@ import Dashboard from './pages/Dashboard';
 import Cases from './pages/Cases';
 import PatientRegistration from './pages/PatientRegistration';
 import MlefForm from './pages/MlefForm';
+import MlReport from './pages/MlReport';
+import ReferralsAndReviews from './pages/ReferralsAndReviews';
 import AutopsyForm from './pages/AutopsyForm';
 import Evidence from './pages/Evidence';
 import Reports from './pages/Reports';
@@ -27,6 +29,8 @@ function App() {
           <Route path="/cases" element={<Cases />} />
           <Route path="/register-patient" element={<PatientRegistration />} />
           <Route path="/clinical-mlef" element={<MlefForm />} />
+          <Route path="/mlr-report" element={<MlReport />} />
+          <Route path="/referrals" element={<ReferralsAndReviews />} />
           <Route path="/autopsy-pmr" element={<AutopsyForm />} />
           <Route path="/evidence" element={<Evidence />} />
           <Route path="/reports" element={<Reports />} />

@@ -1,0 +1,237 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{titlesec}
+\usepackage{parskip}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{caption}
+\usepackage{listings}
+
+% Setting up code block styling for SQL examples
+\lstset{
+    language=SQL,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue}\bfseries,
+    stringstyle=\color{red},
+    commentstyle=\color{green!60!black},
+    numbers=left,
+    numberstyle=\tiny,
+    stepnumber=1,
+    numbersep=5pt,
+    backgroundcolor=\color{gray!10},
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    frame=single,
+    tabsize=2,
+    captionpos=b,
+    breaklines=true,
+    breakatwhitespace=false,
+}
+
+\begin{document}
+
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    
+    {\Huge\bfseries Comprehensive Database Security Goals Report\par}
+    \vspace{1.5cm}
+    {\Large\itshape Forensic Medicine Department Database System\par}
+    \vspace{2cm}
+    
+    {\Large\bfseries CO2050 Database Systems\par}
+    {\Large Assignment 04\par}
+    \vspace{2cm}
+    
+    \textbf{Prepared By:}\par
+    Student Name / ID
+    \vspace{1.5cm}
+    
+    \textbf{Department of Computer Engineering}\par
+    Faculty of Engineering\par
+    University of Peradeniya\par
+    
+    \vfill
+    {\large \today\par}
+\end{titlepage}
+
+\newpage
+\tableofcontents
+\newpage
+
+\section{Executive Summary}
+This report provides a comprehensive analysis of the database security mechanisms embedded within the newly designed Forensic Medicine Department Database System. Transitioning from paper-based or siloed electronic records to a unified relational database presents significant advantages in efficiency, but introduces profound security responsibilities. Because forensic data dictates legal outcomes and handles highly sensitive patient medical records, the system must adhere strictly to the highest standards of data protection.
+
+This document evaluates the 25-table, 10-module database schema (provided via the \texttt{create\_tables.sql} script and the Entity-Relationship diagram) against six primary database security goals: Protecting Sensitive Information, Preventing Unauthorized Access, Maintaining Accurate Data, Ensuring Continuous Availability, Detecting and Responding to Attacks, and Complying with Legal/Regulatory Requirements. Through architectural isolation, Role-Based Access Control (RBAC), ACID-compliant transactional engines, and strict referential integrity, the schema demonstrates a robust defense-in-depth strategy.
+
+\section{Introduction and Threat Landscape}
+The Forensic Medicine Department Database System serves as the central nervous system for managing medico-legal cases, autopsies, clinical forensic examinations, and physical evidence tracing. 
+
+\subsection{The CIA Triad in Forensics}
+The design inherently aligns with the CIA Triad, the cornerstone of information security:
+\begin{itemize}
+    \item \textbf{Confidentiality:} Ensuring that a victim's clinical findings or a suspect's DNA test results are only viewable by authorized judicial medical officers and court officials.
+    \item \textbf{Integrity:} Guaranteeing that an autopsy report or the chain of custody for a murder weapon cannot be maliciously altered or accidentally corrupted.
+    \item \textbf{Availability:} Ensuring that when a court demands a subpoenaed document, the database is online, responsive, and resilient against hardware failures or denial-of-service (DoS) conditions.
+\end{itemize}
+
+\subsection{Threat Landscape}
+A database of this nature faces specific threat vectors:
+\begin{itemize}
+    \item \textbf{Insider Threats:} Authorized users (like clerks or lab technicians) attempting to view or alter records beyond their clearance level (e.g., to leak information to the press).
+    \item \textbf{External Intrusions:} Hackers utilizing SQL injection (SQLi) or brute-force attacks to dump the database for ransom or extortion.
+    \item \textbf{Data Corruption:} Hardware failures, power outages during transactions, or accidental deletion of critical parent records.
+\end{itemize}
+The subsequent sections detail how the specific SQL schema mitigates these threats.
+
+\section{Database Architecture and ER Diagram Overview}
+To understand the security implementations, it is essential to outline the structural scope of the database. The design utilizes 25 interconnected tables grouped logically into 10 cohesive modules:
+
+\begin{itemize}[itemsep=2pt]
+    \item \textbf{Module 1: Patient \& Case Management} -- \texttt{Patient}, \texttt{Case}, \texttt{CaseHistory}.
+    \item \textbf{Module 2: Clinical Forensic Component} -- \texttt{MedicoLegalExamForm}, \texttt{MedicoLegalReport}, \texttt{Referral}, \texttt{ReviewAppointment}.
+    \item \textbf{Module 3: Autopsy Component} -- \texttt{Postmortem}, \texttt{CauseOfDeath}, \texttt{InquestOrder}.
+    \item \textbf{Module 4: Evidence \& Investigations} -- \texttt{Evidence}, \texttt{ChainOfCustody}, \texttt{LaboratoryTest}.
+    \item \textbf{Module 5: Court \& Legal} -- \texttt{CourtReport}, \texttt{CourtSummons}.
+    \item \textbf{Module 6: Staff \& Doctors} -- \texttt{Staff}, \texttt{Doctor}.
+    \item \textbf{Module 7: User Authentication \& Security} -- \texttt{User}, \texttt{Role}, \texttt{RolePermission}.
+    \item \textbf{Module 8: Documents \& Media} -- \texttt{Document}, \texttt{Photograph}.
+    \item \textbf{Module 9: Notifications \& Audit} -- \texttt{Notification}, \texttt{AuditLog}.
+    \item \textbf{Module 10: Reports \& Statistics} -- \texttt{ReportTemplate}.
+\end{itemize}
+
+\textit{Note: The ER diagram below visually represents these entities. Ensure \texttt{forensic\_er\_final.png} is exported and in the same directory to compile.}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.9\textwidth]{forensic_er_final.png}
+    \caption{Entity-Relationship Diagram of the Forensic Medicine Database}
+    \label{fig:er_diagram}
+\end{figure}
+
+The database is highly normalized (Third Normal Form - 3NF), which inherently aids security. By removing data redundancy, we reduce the risk of anomalous updates. For instance, updating a patient's address happens in exactly one place (the \texttt{Patient} table), meaning no contradictory data can exist elsewhere in the system.
+
+\section{Analysis of Database Security Goals}
+
+\subsection{1. Protect Sensitive Information}
+The primary objective of protecting sensitive information is to safeguard confidential data from unauthorized exposure, interception, or exfiltration.
+
+\textbf{Identification of Sensitive Tables and Attributes:}
+\begin{itemize}
+    \item \textbf{Authentication Credentials:} The \texttt{User} table contains the \texttt{PasswordHash} attribute. Storing passwords as cryptographic hashes prevents credential harvesting.
+    \item \textbf{Personal Identifiable Information (PII):} The \texttt{Patient} table holds \texttt{NIC}, \texttt{DateOfBirth}, \texttt{Address}, and \texttt{Phone}.
+    \item \textbf{Medical and Investigative Data:} The \texttt{MedicoLegalExamForm} table stores \texttt{ClinicalFindings} and \texttt{Injuries}. The \texttt{Postmortem} table includes \texttt{InternalFindings}. The \texttt{LaboratoryTest} table contains the \texttt{Result}.
+\end{itemize}
+
+\textbf{Data Masking Strategy:}
+To protect PII from lower-privileged users, the database can utilize SQL Views to mask data. For example, a clerk might only need to verify the last four digits of an NIC:
+\begin{lstlisting}[caption={SQL View for Masking Patient NIC}]
+CREATE VIEW vw_Patient_Basic AS
+SELECT 
+    PatientID, 
+    FirstName, 
+    LastName, 
+    CONCAT('XXXXX-', RIGHT(NIC, 4)) AS MaskedNIC 
+FROM Patient;
+\end{lstlisting}
+Additionally, the underlying DBMS should employ Transparent Data Encryption (TDE) to encrypt the physical \texttt{.ibd} files, ensuring data at rest is unreadable if the physical disks are stolen.
+
+\subsection{2. Prevent Unauthorized Access}
+Preventing unauthorized access involves Authentication (verifying identity) and Authorization (verifying permissions). 
+
+\textbf{Authentication Mechanisms:}
+The database uses the \texttt{User} table to enforce strict authentication. The \texttt{IsActive} boolean flag in both the \texttt{User} and \texttt{Staff} tables allows administrators to instantly revoke access for terminated employees.
+
+\textbf{Authorization and Role-Based Access Control (RBAC):}
+The system employs a sophisticated RBAC model utilizing \texttt{Role}, \texttt{RolePermission}, and \texttt{User}.
+\begin{itemize}
+    \item \textbf{Roles:} Correlate with the `Role` ENUM in the \texttt{Staff} table (e.g., `JMO`, `Lab Technician`, `Clerk`).
+    \item \textbf{Granular Permissions:} The \texttt{RolePermission} table provides fine-grained control using boolean attributes: \texttt{CanCreate}, \texttt{CanRead}, \texttt{CanUpdate}, and \texttt{CanDelete}.
+\end{itemize}
+Before executing a query, the application backend would verify permissions against this table, acting as a gateway to prevent unauthorized module access.
+
+\subsection{3. Maintain Accurate Data}
+Data accuracy ensures that the information is correct and reliable. A data anomaly could lead to a wrongful conviction.
+
+\textbf{Structural Constraints and Referential Integrity:}
+\begin{itemize}
+    \item \textbf{Primary Keys:} Every table employs an \texttt{AUTO\_INCREMENT PRIMARY KEY} to guarantee entity integrity.
+    \item \textbf{Foreign Keys:} 
+    \begin{itemize}
+        \item \textbf{ON UPDATE CASCADE:} Ensures updates cascade through all related records.
+        \item \textbf{ON DELETE RESTRICT:} Used extensively for critical legal links. A \texttt{Patient} cannot be deleted if a \texttt{Case} is tied to them.
+        \item \textbf{ON DELETE SET NULL:} If a \texttt{Staff} member leaves, their ID in the \texttt{Evidence} table's \texttt{CollectedBy} attribute becomes NULL rather than deleting the legal evidence record.
+    \end{itemize}
+\end{itemize}
+
+\textbf{Domain Constraints and Validation:}
+\texttt{UNIQUE} constraints are enforced on \texttt{NIC}, \texttt{CaseNumber}, and \texttt{BarcodeQR}. \texttt{ENUM} data types restrict inputs (e.g., \texttt{Gender} to 'Male', 'Female', 'Other'). \texttt{NOT NULL} constraints ensure data completeness. Furthermore, database triggers can enforce complex business logic, such as ensuring an autopsy date does not precede an incident date.
+
+\subsection{4. Ensure Continuous Availability}
+Availability ensures the database is accessible, especially during urgent legal inquiries.
+
+\textbf{Database Engine Reliability and ACID Properties:}
+The system is built on the \texttt{InnoDB} storage engine in MySQL, which is fully ACID-compliant. It supports transactional processing via Commit and Rollback. This ensures that complex multi-table inserts (like creating a Patient and a Case simultaneously) either complete entirely or fail entirely, preventing partial, corrupt data writes.
+
+\textbf{Operational Continuity:}
+To minimize the Recovery Time Objective (RTO), the deployment must incorporate:
+\begin{itemize}
+    \item \textbf{Database Replication:} A Primary-Replica (Active-Passive) setup where real-time copies are maintained. If the primary server suffers a hardware failure, the replica takes over.
+    \item \textbf{Routine Backups:} Automated scripts must perform daily full backups and frequent incremental backups, stored off-site to defend against ransomware.
+\end{itemize}
+
+\subsection{5. Detect and Respond to Attacks}
+Assuming perimeter defenses may fail, internal detection and auditing are critical.
+
+\textbf{Comprehensive Auditing Mechanism:}
+The centralized \texttt{AuditLog} table tracks data provenance. It captures \texttt{UserID}, \texttt{Action}, \texttt{TableAffected}, \texttt{RecordID}, \texttt{IPAddress}, and \texttt{Timestamp}. Crucially, it records both \texttt{OldValue} and \texttt{NewValue}.
+Triggers are the most secure way to enforce this, as they operate at the database level and cannot be bypassed by the application:
+\begin{lstlisting}[caption={Hypothetical Trigger for Auditing MLEF Changes}]
+CREATE TRIGGER before_mlef_update
+BEFORE UPDATE ON MedicoLegalExamForm
+FOR EACH ROW
+BEGIN
+    INSERT INTO AuditLog (UserID, Action, TableAffected, RecordID, OldValue, NewValue, Timestamp)
+    VALUES (@current_user_id, 'UPDATE', 'MedicoLegalExamForm', OLD.MLEFID, OLD.ClinicalFindings, NEW.ClinicalFindings, NOW());
+END;
+\end{lstlisting}
+
+\subsection{6. Comply with Legal and Regulatory Requirements}
+The database must facilitate compliance with criminal evidence handling laws and data privacy acts.
+
+\textbf{Evidence Chain of Custody:}
+Physical evidence is only admissible if its history is completely accounted for. The \texttt{ChainOfCustody} table tracks every movement of an item from the \texttt{Evidence} table, recording \texttt{TransferredFrom}, \texttt{TransferredTo}, \texttt{TransferDate}, and \texttt{Purpose}.
+
+\textbf{Non-Repudiation and Signatures:}
+The \texttt{CourtReport} table incorporates a \texttt{DigitalSignature} attribute, storing a cryptographic hash confirming a specific doctor finalized the report, preventing repudiation. By strictly enforcing RBAC (Goal 2) and logging all access (Goal 5), the system aligns with standard medical data protection regulations, ensuring the principle of "least privilege."
+
+\section{Recommendations for Improving Database Security}
+While the provided schema establishes a highly secure foundation, information security requires defense-in-depth. The following advanced recommendations are proposed:
+
+\begin{enumerate}
+    \item \textbf{Implement Multi-Factor Authentication (MFA):} 
+    To prevent unauthorized access via compromised passwords, a \texttt{2FA\_Secret} column should be added to the \texttt{User} table. This supports Time-based One-Time Passwords (TOTP), requiring a mobile device prompt for successful logins.
+    
+    \item \textbf{Automated Account Lockout Policies:} 
+    To automatically thwart brute-force attacks, \texttt{FailedLoginAttempts} (INT) and \texttt{LockoutUntil} (DATETIME) should be added to the \texttt{User} table. Five consecutive failed attempts should trigger a 30-minute lockout.
+    
+    \item \textbf{Row-Level Security (RLS) and Field-Level Encryption:} 
+    Field-level encryption should be implemented by the application for columns like \texttt{Patient.NIC} and \texttt{MedicoLegalExamForm.ClinicalFindings}. Furthermore, Row-Level Security (available in PostgreSQL and newer MySQL versions) could be enforced so doctors can only query cases where their \texttt{DoctorID} matches the \texttt{AssignedDoctorID}.
+    
+    \item \textbf{Database Firewall and Network Segmentation:}
+    The database server should reside in a segmented VLAN, disconnected from the hospital's general Wi-Fi, only allowing traffic from specific application server IPs on designated ports.
+    
+    \item \textbf{Data Archival and Retention Strategies:} 
+    Closed cases from decades ago unnecessarily expand the attack surface. An archival strategy should migrate old cases to a highly restricted "Cold Storage" database, keeping the primary operational database lean and secure.
+\end{enumerate}
+
+\section{Conclusion}
+The Forensic Medicine Department Database System exhibits a profoundly well-structured relational design that inherently addresses the complex security requirements of a medico-legal environment. By separating users from staff, implementing modular role-based permissions, maintaining strict referential integrity with cascading constraints, and establishing a dedicated audit and chain-of-custody trail, the database fulfills all six critical security goals. Implementing the additional recommendations, particularly Multi-Factor Authentication and Row-Level Security, will elevate the system to enterprise-grade security, ensuring maximum protection for victims, staff, and the integrity of the judicial process.
+
+\end{document}
