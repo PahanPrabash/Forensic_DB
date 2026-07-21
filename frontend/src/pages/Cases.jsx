@@ -34,10 +34,11 @@ const Cases = () => {
           <select style={{ padding: '0.5rem 1rem', background: 'rgba(10, 10, 10, 0.6)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', color: 'var(--text-main)' }}>
             <option value="">All Statuses</option>
             <option value="open">Open</option>
+            <option value="investigation">Under Investigation</option>
             <option value="closed">Closed</option>
             <option value="court">Pending Court</option>
           </select>
-          <button className="btn btn-secondary">Filter</button>
+          <button className="btn btn-secondary" onClick={handleFilter}>Filter</button>
         </div>
 
         <div className="table-container">

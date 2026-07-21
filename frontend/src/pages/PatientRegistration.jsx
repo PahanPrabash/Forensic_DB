@@ -1,8 +1,11 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const PatientRegistration = () => {
   const navigate = useNavigate();
+  const [doctors, setDoctors] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
 
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
@@ -66,6 +69,14 @@ const PatientRegistration = () => {
       <div className="glass-panel" style={{ padding: '2rem', maxWidth: '900px', margin: '0 auto' }}>
         <form onSubmit={handleSubmit}>
           
+          {error && (
+            <div style={{ 
+              background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)',
+              borderRadius: 'var(--radius-sm)', padding: '0.75rem 1rem', marginBottom: '1rem',
+              color: '#f87171', fontSize: '0.875rem'
+            }}>{error}</div>
+          )}
+
           <h3 style={{ marginTop: 0, marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: '1px solid var(--border)', color: 'var(--primary)', fontSize: '1.1rem' }}>Patient Information</h3>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
             <div className="form-group">
@@ -111,8 +122,8 @@ const PatientRegistration = () => {
               <label className="form-label">Case Type</label>
               <select name="caseType" className="form-control" required>
                 <option value="">Select Type</option>
-                <option value="clinical">Clinical Forensic</option>
-                <option value="autopsy">Autopsy</option>
+                <option value="Clinical">Clinical Forensic</option>
+                <option value="Autopsy">Autopsy</option>
               </select>
             </div>
             <div className="form-group">
@@ -151,7 +162,9 @@ const PatientRegistration = () => {
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem' }}>
             <button type="button" className="btn btn-secondary" onClick={() => navigate(-1)}>Cancel</button>
-            <button type="submit" className="btn btn-primary">Register Patient & Case</button>
+            <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+              {isSubmitting ? 'Registering...' : 'Register Patient & Case'}
+            </button>
           </div>
 
         </form>
