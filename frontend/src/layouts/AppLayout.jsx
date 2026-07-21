@@ -40,6 +40,21 @@ const AppLayout = () => {
             </NavLink>
           </div>
           <div className="nav-item">
+            <NavLink to="/cause-of-death" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
+              <ion-icon name="document-outline"></ion-icon> Cause of Death
+            </NavLink>
+          </div>
+          <div className="nav-item">
+            <NavLink to="/court-summons" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
+              <ion-icon name="calendar-outline"></ion-icon> Court Summons
+            </NavLink>
+          </div>
+          <div className="nav-item">
+            <NavLink to="/audit-notifications" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
+              <ion-icon name="notifications-circle-outline"></ion-icon> Audit & Alerts
+            </NavLink>
+          </div>
+          <div className="nav-item">
             <NavLink to="/evidence" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
               <ion-icon name="barcode-outline"></ion-icon> Evidence & Lab
             </NavLink>
