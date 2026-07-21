@@ -1,8 +1,30 @@
 import React from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const AppLayout = () => {
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  const getInitials = () => {
+    if (!user) return 'U';
+    const first = user.FirstName || user.firstName || user.username || '';
+    const last = user.LastName || user.lastName || '';
+    return `${first[0] || ''}${last[0] || ''}`.toUpperCase() || 'U';
+  };
+
+  const getDisplayName = () => {
+    if (!user) return 'User Profile';
+    if (user.FirstName || user.firstName) {
+      return `${user.FirstName || user.firstName} ${user.LastName || user.lastName || ''}`.trim();
+    }
+    return user.username || 'User Profile';
+  };
 
   return (
     <div className="app-container">
@@ -49,6 +71,15 @@ const AppLayout = () => {
               <ion-icon name="stats-chart-outline"></ion-icon> Reports
             </NavLink>
           </div>
+          
+          <div style={{ margin: '1.5rem 0 0.5rem', fontSize: '0.75rem', textTransform: 'uppercase', color: '#475569', fontWeight: '700', letterSpacing: '0.05em', paddingLeft: '1rem' }}>
+            Account
+          </div>
+          <div className="nav-item">
+            <NavLink to="/profile" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
+              <ion-icon name="person-circle-outline"></ion-icon> Profile Settings
+            </NavLink>
+          </div>
         </nav>
       </aside>
 
@@ -58,7 +89,7 @@ const AppLayout = () => {
         {/* Header */}
         <header className="top-header">
           <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '500' }}>
-            {/* Contextual Title based on route can be added here */}
+            Department of Forensic Medicine
           </h2>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
@@ -66,12 +97,29 @@ const AppLayout = () => {
               <ion-icon name="notifications-outline" style={{ fontSize: '1.5rem', color: 'var(--text-muted)' }}></ion-icon>
               <span style={{ position: 'absolute', top: '-2px', right: '-2px', background: 'var(--danger)', width: '10px', height: '10px', borderRadius: '50%', border: '2px solid var(--bg-dark)' }}></span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '0.5rem 1rem', background: 'var(--glass-bg)', border: 'var(--glass-border)', borderRadius: '20px', cursor: 'pointer' }}>
-              <div style={{ width: '30px', height: '30px', background: 'var(--primary)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600' }}>CW</div>
-              <span style={{ fontSize: '0.875rem', fontWeight: '500' }}>Dr. Wickramasinghe</span>
+            
+            {/* User Profile Pill */}
+            <div 
+              onClick={() => navigate('/profile')}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '10px', padding: '0.5rem 1rem',
+                background: 'var(--glass-bg)', border: 'var(--glass-border)', borderRadius: '20px',
+                cursor: 'pointer', transition: 'all 0.2s'
+              }}
+              title="Click to Edit Profile"
+            >
+              <div style={{
+                width: '30px', height: '30px', background: 'var(--primary)', borderRadius: '50%',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600', color: '#fff', fontSize: '0.85rem'
+              }}>
+                {getInitials()}
+              </div>
+              <span style={{ fontSize: '0.875rem', fontWeight: '500' }}>{getDisplayName()}</span>
             </div>
+
             <button 
-              onClick={() => navigate('/login')} 
+              onClick={handleLogout} 
+              title="Log Out"
               style={{ background: 'none', border: 'none', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', cursor: 'pointer' }}
             >
               <ion-icon name="log-out-outline" style={{ fontSize: '1.5rem' }}></ion-icon>

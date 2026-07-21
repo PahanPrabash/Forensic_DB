@@ -1,17 +1,22 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 const Evidence = () => {
+  const [evidenceList, setEvidenceList] = useState([]);
+  const [labRequests, setLabRequests] = useState([]);
+
   return (
     <div className="page-content animate-fade-in">
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1.5rem' }}>
-        <button className="btn btn-primary"><ion-icon name="add"></ion-icon> Log New Evidence</button>
+        <button className="btn btn-primary">
+          <ion-icon name="add-outline"></ion-icon> Log New Evidence
+        </button>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
         
         {/* Evidence Tracking */}
         <div className="glass-panel" style={{ padding: '1.5rem' }}>
-          <h3 style={{ marginTop: 0 }}>Chain of Custody</h3>
+          <h3 style={{ marginTop: 0, fontSize: '1.1rem' }}>Chain of Custody</h3>
           <div className="table-container">
             <table className="data-table">
               <thead>
@@ -23,24 +28,22 @@ const Evidence = () => {
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td style={{ fontFamily: 'monospace' }}>EV-84729</td>
-                  <td>Blood Swab</td>
-                  <td>CAS-2026-089</td>
-                  <td><span className="badge badge-warning">In Lab</span></td>
-                </tr>
-                <tr>
-                  <td style={{ fontFamily: 'monospace' }}>EV-84728</td>
-                  <td>Clothing</td>
-                  <td>CAS-2026-088</td>
-                  <td><span className="badge badge-success">In Custody</span></td>
-                </tr>
-                <tr>
-                  <td style={{ fontFamily: 'monospace' }}>EV-84725</td>
-                  <td>Weapon</td>
-                  <td>CAS-2026-085</td>
-                  <td><span className="badge badge-primary">Transferred</span></td>
-                </tr>
+                {evidenceList.length > 0 ? (
+                  evidenceList.map((e) => (
+                    <tr key={e.EvidenceID}>
+                      <td style={{ fontFamily: 'monospace' }}>{e.QRCode || `EV-${e.EvidenceID}`}</td>
+                      <td>{e.EvidenceType}</td>
+                      <td>{e.CaseNumber}</td>
+                      <td><span className="badge badge-warning">{e.ChainOfCustodyStatus}</span></td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="4" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>
+                      No evidence samples logged in database yet. Click "Log New Evidence" to add a specimen.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -48,7 +51,7 @@ const Evidence = () => {
 
         {/* Laboratory Tests */}
         <div className="glass-panel" style={{ padding: '1.5rem' }}>
-          <h3 style={{ marginTop: 0 }}>Laboratory Requests</h3>
+          <h3 style={{ marginTop: 0, fontSize: '1.1rem' }}>Laboratory Requests</h3>
           <div className="table-container">
             <table className="data-table">
               <thead>
@@ -60,24 +63,22 @@ const Evidence = () => {
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td>Toxicology</td>
-                  <td style={{ fontFamily: 'monospace' }}>EV-84729</td>
-                  <td>Dr. Silva</td>
-                  <td><span className="badge badge-warning">In Progress</span></td>
-                </tr>
-                <tr>
-                  <td>Histology</td>
-                  <td>--</td>
-                  <td>Dr. Perera</td>
-                  <td><span className="badge badge-danger">Requested</span></td>
-                </tr>
-                <tr>
-                  <td>DNA Analysis</td>
-                  <td style={{ fontFamily: 'monospace' }}>EV-84720</td>
-                  <td>Dr. Wickramasinghe</td>
-                  <td><span className="badge badge-success">Completed</span></td>
-                </tr>
+                {labRequests.length > 0 ? (
+                  labRequests.map((l) => (
+                    <tr key={l.TestID}>
+                      <td>{l.TestType}</td>
+                      <td style={{ fontFamily: 'monospace' }}>{l.EvidenceBarcode || '--'}</td>
+                      <td>{l.RequestedBy}</td>
+                      <td><span className="badge badge-warning">{l.Status}</span></td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="4" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>
+                      No laboratory test requests logged yet.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>

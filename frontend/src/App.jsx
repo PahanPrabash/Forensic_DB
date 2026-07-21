@@ -1,5 +1,6 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
 import AppLayout from './layouts/AppLayout';
 import Home from './pages/Home';
 import Login from './pages/Login';
@@ -11,28 +12,32 @@ import AutopsyForm from './pages/AutopsyForm';
 import Evidence from './pages/Evidence';
 import Reports from './pages/Reports';
 import Signup from './pages/Signup';
+import Profile from './pages/Profile';
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        {/* Public pages */}
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
-        
-        {/* Protected Routes inside AppLayout */}
-        <Route element={<AppLayout />}>
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/cases" element={<Cases />} />
-          <Route path="/register-patient" element={<PatientRegistration />} />
-          <Route path="/clinical-mlef" element={<MlefForm />} />
-          <Route path="/autopsy-pmr" element={<AutopsyForm />} />
-          <Route path="/evidence" element={<Evidence />} />
-          <Route path="/reports" element={<Reports />} />
-        </Route>
-      </Routes>
-    </Router>
+    <AuthProvider>
+      <Router>
+        <Routes>
+          {/* Public pages */}
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          
+          {/* Protected Routes inside AppLayout */}
+          <Route element={<AppLayout />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/cases" element={<Cases />} />
+            <Route path="/register-patient" element={<PatientRegistration />} />
+            <Route path="/clinical-mlef" element={<MlefForm />} />
+            <Route path="/autopsy-pmr" element={<AutopsyForm />} />
+            <Route path="/evidence" element={<Evidence />} />
+            <Route path="/reports" element={<Reports />} />
+            <Route path="/profile" element={<Profile />} />
+          </Route>
+        </Routes>
+      </Router>
+    </AuthProvider>
   );
 }
 

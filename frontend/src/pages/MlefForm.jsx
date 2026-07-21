@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
 
 const MlefForm = () => {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState(0);
+
+  const doctorName = user ? (user.FirstName ? `Dr. ${user.FirstName} ${user.LastName || ''}` : user.username) : 'Dr. JMO';
 
   return (
     <div className="page-content animate-fade-in">
@@ -34,19 +38,19 @@ const MlefForm = () => {
             <>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
                 <div className="form-group">
-                  <label className="form-label">Linked Case</label>
+                  <label className="form-label">Linked Case Number</label>
                   <div style={{ display: 'flex', gap: '10px' }}>
-                    <input type="text" className="form-control" value="CAS-2026-089" readOnly style={{ background: 'rgba(0,0,0,0.2)' }} />
+                    <input type="text" className="form-control" placeholder="Select or enter Case Number (e.g. CAS-2026-001)" />
                     <button type="button" className="btn btn-secondary">Select</button>
                   </div>
                 </div>
                 <div className="form-group">
                   <label className="form-label">MLEF Number (Auto-generated)</label>
-                  <input type="text" className="form-control" value="MLEF/2026/045" readOnly style={{ background: 'rgba(0,0,0,0.2)' }} />
+                  <input type="text" className="form-control" placeholder="Auto-generated on save" readOnly style={{ background: 'rgba(0,0,0,0.2)' }} />
                 </div>
                 <div className="form-group">
                   <label className="form-label">Examining Doctor</label>
-                  <input type="text" className="form-control" value="Dr. C. Wickramasinghe" readOnly style={{ background: 'rgba(0,0,0,0.2)' }} />
+                  <input type="text" className="form-control" value={doctorName} readOnly style={{ background: 'rgba(0,0,0,0.2)' }} />
                 </div>
                 <div className="form-group">
                   <label className="form-label">Examination Date & Time</label>
@@ -90,7 +94,7 @@ const MlefForm = () => {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem' }}>
                 <div className="form-group">
                   <label className="form-label">General Clinical Findings</label>
-                  <textarea className="form-control" rows="4" placeholder="Enter general findings..."></textarea>
+                  <textarea className="form-control" rows="4" placeholder="Enter general clinical examination findings..."></textarea>
                 </div>
                 <div className="form-group">
                   <label className="form-label">Detailed Injury Description</label>
@@ -102,59 +106,20 @@ const MlefForm = () => {
 
           {activeTab === 2 && (
             <>
-              <h3 style={{ marginTop: 0, marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: '1px solid var(--border)', color: 'var(--primary)', fontSize: '1.1rem' }}>Injuries & Diagram</h3>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem' }}>
-                <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                  <label className="form-label">Body Diagram Annotation Upload</label>
-                  <div style={{ border: '2px dashed var(--border)', padding: '2rem', textAlign: 'center', borderRadius: 'var(--radius-sm)', color: 'var(--text-muted)', cursor: 'pointer', background: 'rgba(0,0,0,0.2)' }}>
-                    <ion-icon name="body-outline" style={{ fontSize: '2rem', marginBottom: '0.5rem' }}></ion-icon>
-                    <div>Upload Annotated Body Diagrams</div>
-                  </div>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Weapon Used (Suspected)</label>
-                  <select className="form-control">
-                    <option value="">Select Weapon Category</option>
-                    <option value="blunt">Blunt Object</option>
-                    <option value="sharp">Sharp Object</option>
-                    <option value="firearm">Firearm</option>
-                    <option value="burns">Thermal/Chemical</option>
-                    <option value="other">Other</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Circumstances of Injury</label>
-                  <textarea className="form-control" rows="3" placeholder="Briefly describe the circumstances..."></textarea>
-                </div>
+              <h3 style={{ marginTop: 0, marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: '1px solid var(--border)', color: 'var(--primary)', fontSize: '1.1rem' }}>Body Injury Diagram & Photos</h3>
+              <div style={{ border: '2px dashed var(--border)', padding: '3rem', textAlign: 'center', borderRadius: 'var(--radius-sm)', color: 'var(--text-muted)', background: 'rgba(0,0,0,0.2)' }}>
+                <ion-icon name="body-outline" style={{ fontSize: '3rem', color: 'var(--primary)', marginBottom: '0.5rem' }}></ion-icon>
+                <div>Interactive Injury Diagram Canvas & Photo Upload</div>
               </div>
             </>
           )}
 
           {activeTab === 3 && (
             <>
-              <h3 style={{ marginTop: 0, marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: '1px solid var(--border)', color: 'var(--primary)', fontSize: '1.1rem' }}>Conclusion & Opinion</h3>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem' }}>
-                <div className="form-group">
-                  <label className="form-label">Category of Hurt</label>
-                  <select className="form-control">
-                    <option value="">Select Category...</option>
-                    <option value="non-grievous">Non-Grievous</option>
-                    <option value="grievous">Grievous Hurt</option>
-                    <option value="fatal">Fatal</option>
-                    <option value="endangering">Endangering Life</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Final Opinion</label>
-                  <textarea className="form-control" rows="5" placeholder="Enter final medical opinion..."></textarea>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Digital Signature</label>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.5rem' }}>
-                    <input type="checkbox" id="sign_mlef" />
-                    <label htmlFor="sign_mlef" style={{ cursor: 'pointer' }}>I digitally sign this Medico-Legal Examination Form.</label>
-                  </div>
-                </div>
+              <h3 style={{ marginTop: 0, marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: '1px solid var(--border)', color: 'var(--primary)', fontSize: '1.1rem' }}>Doctor Conclusion & Opinion</h3>
+              <div className="form-group">
+                <label className="form-label">Medical Opinion & Conclusion</label>
+                <textarea className="form-control" rows="5" placeholder="Enter formal medical opinion for court submission..."></textarea>
               </div>
             </>
           )}

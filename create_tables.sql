@@ -1,6 +1,5 @@
 -- ═══════════════════════════════════════════════════════════════════════════
 -- FORENSIC MEDICINE DEPARTMENT DATABASE SYSTEM
--- MySQL CREATE TABLE Scripts — 25 Tables
 -- University of Peradeniya, Dept. Forensic Medicine
 -- ═══════════════════════════════════════════════════════════════════════════
 
@@ -13,10 +12,10 @@ CREATE DATABASE forensic_medicine_db
 USE forensic_medicine_db;
 
 -- ═══════════════════════════════════════════════════════════════════════════
--- MODULE 6: STAFF & DOCTORS (created first — referenced by many tables)
+-- STAFF & DOCTORS 
 -- ═══════════════════════════════════════════════════════════════════════════
 
--- Table 16: Staff
+-- Table Staff
 CREATE TABLE Staff (
     StaffID       INT            AUTO_INCREMENT PRIMARY KEY,
     FirstName     VARCHAR(100)   NOT NULL,
@@ -31,7 +30,7 @@ CREATE TABLE Staff (
     INDEX idx_staff_active (IsActive)
 ) ENGINE=InnoDB;
 
--- Table 17: Doctor
+-- Table Doctor
 CREATE TABLE Doctor (
     DoctorID        INT            AUTO_INCREMENT PRIMARY KEY,
     StaffID         INT            NOT NULL UNIQUE,
@@ -46,17 +45,17 @@ CREATE TABLE Doctor (
 
 
 -- ═══════════════════════════════════════════════════════════════════════════
--- MODULE 7: USER AUTHENTICATION & SECURITY
+-- USER AUTHENTICATION & SECURITY
 -- ═══════════════════════════════════════════════════════════════════════════
 
--- Table 19: Role
+-- Table Role
 CREATE TABLE Role (
     RoleID      INT            AUTO_INCREMENT PRIMARY KEY,
     RoleName    VARCHAR(50)    NOT NULL UNIQUE,
     Description TEXT
 ) ENGINE=InnoDB;
 
--- Table 20: RolePermission
+-- Table RolePermission
 CREATE TABLE RolePermission (
     PermissionID INT          AUTO_INCREMENT PRIMARY KEY,
     RoleID       INT          NOT NULL,
@@ -71,7 +70,7 @@ CREATE TABLE RolePermission (
     INDEX idx_perm_role (RoleID)
 ) ENGINE=InnoDB;
 
--- Table 18: User
+-- Table User
 CREATE TABLE User (
     UserID       INT            AUTO_INCREMENT PRIMARY KEY,
     Username     VARCHAR(50)    NOT NULL UNIQUE,
@@ -91,10 +90,10 @@ CREATE TABLE User (
 
 
 -- ═══════════════════════════════════════════════════════════════════════════
--- MODULE 1: PATIENT & CASE MANAGEMENT (Core)
+-- PATIENT & CASE MANAGEMENT 
 -- ═══════════════════════════════════════════════════════════════════════════
 
--- Table 1: Patient
+-- Table Patient
 CREATE TABLE Patient (
     PatientID        INT            AUTO_INCREMENT PRIMARY KEY,
     FirstName        VARCHAR(100)   NOT NULL,
@@ -113,7 +112,7 @@ CREATE TABLE Patient (
     INDEX idx_patient_gender (Gender)
 ) ENGINE=InnoDB;
 
--- Table 2: Case
+-- Table Case
 CREATE TABLE `Case` (
     CaseID            INT            AUTO_INCREMENT PRIMARY KEY,
     CaseNumber        VARCHAR(50)    NOT NULL UNIQUE,
@@ -142,7 +141,7 @@ CREATE TABLE `Case` (
     INDEX idx_case_doctor (AssignedDoctorID)
 ) ENGINE=InnoDB;
 
--- Table 3: CaseHistory
+-- Table CaseHistory
 CREATE TABLE CaseHistory (
     HistoryID         INT            AUTO_INCREMENT PRIMARY KEY,
     CaseID            INT            NOT NULL,
@@ -159,10 +158,10 @@ CREATE TABLE CaseHistory (
 
 
 -- ═══════════════════════════════════════════════════════════════════════════
--- MODULE 2: CLINICAL FORENSIC COMPONENT
+-- CLINICAL FORENSIC COMPONENT
 -- ═══════════════════════════════════════════════════════════════════════════
 
--- Table 4: MedicoLegalExamForm (MLEF)
+-- Table MedicoLegalExamForm (MLEF)
 CREATE TABLE MedicoLegalExamForm (
     MLEFID              INT            AUTO_INCREMENT PRIMARY KEY,
     MLEFNumber          VARCHAR(50)    NOT NULL UNIQUE,
@@ -190,7 +189,7 @@ CREATE TABLE MedicoLegalExamForm (
     INDEX idx_mlef_date (ExaminationDate)
 ) ENGINE=InnoDB;
 
--- Table 5: MedicoLegalReport (MLR)
+-- Table MedicoLegalReport (MLR)
 CREATE TABLE MedicoLegalReport (
     MLRID                INT            AUTO_INCREMENT PRIMARY KEY,
     MLRNumber            VARCHAR(50)    UNIQUE,
@@ -212,7 +211,7 @@ CREATE TABLE MedicoLegalReport (
     INDEX idx_mlr_status (Status)
 ) ENGINE=InnoDB;
 
--- Table 6: Referral
+-- Table Referral
 CREATE TABLE Referral (
     ReferralID       INT            AUTO_INCREMENT PRIMARY KEY,
     CaseID           INT            NOT NULL,
@@ -231,7 +230,7 @@ CREATE TABLE Referral (
     INDEX idx_referral_date (ReferralDate)
 ) ENGINE=InnoDB;
 
--- Table 7: ReviewAppointment
+-- Table ReviewAppointment
 CREATE TABLE ReviewAppointment (
     ReviewID      INT            AUTO_INCREMENT PRIMARY KEY,
     CaseID        INT            NOT NULL,
@@ -254,10 +253,10 @@ CREATE TABLE ReviewAppointment (
 
 
 -- ═══════════════════════════════════════════════════════════════════════════
--- MODULE 3: AUTOPSY COMPONENT
+-- AUTOPSY COMPONENT
 -- ═══════════════════════════════════════════════════════════════════════════
 
--- Table 8: Postmortem
+-- Table Postmortem
 CREATE TABLE Postmortem (
     PostmortemID       INT            AUTO_INCREMENT PRIMARY KEY,
     PMNumber           VARCHAR(50)    NOT NULL UNIQUE,
@@ -284,7 +283,7 @@ CREATE TABLE Postmortem (
     INDEX idx_pm_status (Status)
 ) ENGINE=InnoDB;
 
--- Table 9: CauseOfDeath
+-- Table CauseOfDeath
 CREATE TABLE CauseOfDeath (
     CODID                     INT            AUTO_INCREMENT PRIMARY KEY,
     PostmortemID              INT            NOT NULL UNIQUE COMMENT '1:1 relationship with Postmortem',
@@ -303,7 +302,7 @@ CREATE TABLE CauseOfDeath (
     INDEX idx_cod_manner (MannerOfDeath)
 ) ENGINE=InnoDB;
 
--- Table 10: InquestOrder
+-- Table InquestOrder
 CREATE TABLE InquestOrder (
     OrderID       INT            AUTO_INCREMENT PRIMARY KEY,
     CaseID        INT            NOT NULL,
@@ -323,10 +322,10 @@ CREATE TABLE InquestOrder (
 
 
 -- ═══════════════════════════════════════════════════════════════════════════
--- MODULE 4: EVIDENCE & INVESTIGATIONS
+-- EVIDENCE & INVESTIGATIONS
 -- ═══════════════════════════════════════════════════════════════════════════
 
--- Table 11: Evidence
+-- Table Evidence
 CREATE TABLE Evidence (
     EvidenceID           INT            AUTO_INCREMENT PRIMARY KEY,
     CaseID               INT            NOT NULL,
@@ -347,7 +346,7 @@ CREATE TABLE Evidence (
     INDEX idx_evidence_status (ChainOfCustodyStatus)
 ) ENGINE=InnoDB;
 
--- Table 12: ChainOfCustody
+-- Table ChainOfCustody
 CREATE TABLE ChainOfCustody (
     CustodyID       INT            AUTO_INCREMENT PRIMARY KEY,
     EvidenceID      INT            NOT NULL,
@@ -366,7 +365,7 @@ CREATE TABLE ChainOfCustody (
     INDEX idx_custody_date (TransferDate)
 ) ENGINE=InnoDB;
 
--- Table 13: LaboratoryTest
+-- Table LaboratoryTest
 CREATE TABLE LaboratoryTest (
     TestID         INT            AUTO_INCREMENT PRIMARY KEY,
     CaseID         INT            NOT NULL,
@@ -394,10 +393,10 @@ CREATE TABLE LaboratoryTest (
 
 
 -- ═══════════════════════════════════════════════════════════════════════════
--- MODULE 5: COURT & LEGAL
+-- COURT & LEGAL
 -- ═══════════════════════════════════════════════════════════════════════════
 
--- Table 14: CourtReport
+-- Table CourtReport
 CREATE TABLE CourtReport (
     ReportID         INT            AUTO_INCREMENT PRIMARY KEY,
     CaseID           INT            NOT NULL,
@@ -417,7 +416,7 @@ CREATE TABLE CourtReport (
     INDEX idx_courtreport_status (Status)
 ) ENGINE=InnoDB;
 
--- Table 15: CourtSummons
+-- Table CourtSummons
 CREATE TABLE CourtSummons (
     SummonsID    INT            AUTO_INCREMENT PRIMARY KEY,
     CaseID       INT            NOT NULL,
@@ -438,10 +437,10 @@ CREATE TABLE CourtSummons (
 
 
 -- ═══════════════════════════════════════════════════════════════════════════
--- MODULE 8: DOCUMENTS & MEDIA
+-- DOCUMENTS & MEDIA
 -- ═══════════════════════════════════════════════════════════════════════════
 
--- Table 21: Document
+-- Table Document
 CREATE TABLE Document (
     DocumentID   INT            AUTO_INCREMENT PRIMARY KEY,
     CaseID       INT            NOT NULL,
@@ -458,7 +457,7 @@ CREATE TABLE Document (
     INDEX idx_doc_type (DocumentType)
 ) ENGINE=InnoDB;
 
--- Table 22: Photograph
+-- Table Photograph
 CREATE TABLE Photograph (
     PhotoID      INT            AUTO_INCREMENT PRIMARY KEY,
     CaseID       INT            NOT NULL,
@@ -481,10 +480,10 @@ CREATE TABLE Photograph (
 
 
 -- ═══════════════════════════════════════════════════════════════════════════
--- MODULE 9: NOTIFICATIONS & AUDIT
+-- NOTIFICATIONS & AUDIT
 -- ═══════════════════════════════════════════════════════════════════════════
 
--- Table 23: Notification
+-- Table Notification
 CREATE TABLE Notification (
     NotificationID   INT            AUTO_INCREMENT PRIMARY KEY,
     UserID           INT            NOT NULL,
@@ -504,7 +503,7 @@ CREATE TABLE Notification (
     INDEX idx_notif_date (CreatedAt)
 ) ENGINE=InnoDB;
 
--- Table 24: AuditLog
+-- Table AuditLog
 CREATE TABLE AuditLog (
     LogID         INT            AUTO_INCREMENT PRIMARY KEY,
     UserID        INT,
@@ -525,10 +524,10 @@ CREATE TABLE AuditLog (
 
 
 -- ═══════════════════════════════════════════════════════════════════════════
--- MODULE 10: REPORTS & STATISTICS
+-- REPORTS & STATISTICS
 -- ═══════════════════════════════════════════════════════════════════════════
 
--- Table 25: ReportTemplate
+-- Table ReportTemplate
 CREATE TABLE ReportTemplate (
     TemplateID      INT            AUTO_INCREMENT PRIMARY KEY,
     TemplateName    VARCHAR(200)   NOT NULL,
@@ -543,28 +542,5 @@ CREATE TABLE ReportTemplate (
     INDEX idx_template_active (IsActive)
 ) ENGINE=InnoDB;
 
-
--- ═══════════════════════════════════════════════════════════════════════════
--- VERIFICATION: List all tables
--- ═══════════════════════════════════════════════════════════════════════════
 SHOW TABLES;
 
--- ═══════════════════════════════════════════════════════════════════════════
--- SUMMARY
--- ═══════════════════════════════════════════════════════════════════════════
--- Total Tables Created: 25
--- 
--- Module 1 (Patient & Case):    Patient, Case, CaseHistory
--- Module 2 (Clinical):          MedicoLegalExamForm, MedicoLegalReport, Referral, ReviewAppointment
--- Module 3 (Autopsy):           Postmortem, CauseOfDeath, InquestOrder
--- Module 4 (Evidence):          Evidence, ChainOfCustody, LaboratoryTest
--- Module 5 (Court):             CourtReport, CourtSummons
--- Module 6 (Staff):             Staff, Doctor
--- Module 7 (Auth):              User, Role, RolePermission
--- Module 8 (Documents):         Document, Photograph
--- Module 9 (Notifications):     Notification, AuditLog
--- Module 10 (Reports):          ReportTemplate
--- 
--- All tables use InnoDB engine for transaction support and foreign key constraints.
--- Proper indexes are created on frequently queried columns.
--- Referential integrity is enforced with ON UPDATE CASCADE and appropriate ON DELETE actions.

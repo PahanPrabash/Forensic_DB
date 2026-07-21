@@ -1,18 +1,34 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
+  
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [focusedField, setFocusedField] = useState(null);
+  const [errorMessage, setErrorMessage] = useState('');
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    // Simulate a brief loading animation before navigating
-    setTimeout(() => {
-      navigate('/dashboard');
-    }, 800);
+    setErrorMessage('');
+
+    try {
+      const res = await login(username, password);
+      if (res.success) {
+        navigate('/dashboard');
+      } else {
+        setErrorMessage(res.message || 'Invalid username or password');
+      }
+    } catch (err) {
+      setErrorMessage(err.message || 'Unable to connect to authentication server');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -51,7 +67,6 @@ const Login = () => {
         
         {/* Logo & Header */}
         <div className="login-header" style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-          {/* Animated Shield Icon */}
           <div style={{
             width: '64px', height: '64px', margin: '0 auto 1rem',
             background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(14, 165, 233, 0.15))',
@@ -70,6 +85,18 @@ const Login = () => {
           </div>
         </div>
 
+        {/* Error Alert Message */}
+        {errorMessage && (
+          <div style={{
+            background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)',
+            color: '#f87171', padding: '0.75rem 1rem', borderRadius: '8px', marginBottom: '1.5rem',
+            fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.5rem'
+          }}>
+            <ion-icon name="alert-circle-outline" style={{ fontSize: '1.2rem', flexShrink: 0 }}></ion-icon>
+            <span>{errorMessage}</span>
+          </div>
+        )}
+
         <form onSubmit={handleLogin}>
           <div className="form-group">
             <label htmlFor="username" className="form-label">Username / Staff ID</label>
@@ -78,8 +105,10 @@ const Login = () => {
                 type="text" 
                 id="username" 
                 className="form-control" 
-                placeholder="Enter your credentials" 
+                placeholder="Enter your username" 
                 required
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 onFocus={() => setFocusedField('username')}
                 onBlur={() => setFocusedField(null)}
                 style={{
@@ -105,6 +134,8 @@ const Login = () => {
                 className="form-control" 
                 placeholder="••••••••" 
                 required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 onFocus={() => setFocusedField('password')}
                 onBlur={() => setFocusedField(null)}
                 style={{
@@ -141,7 +172,7 @@ const Login = () => {
             }}
           >
             {isSubmitting ? (
-              <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}>
                 <span style={{
                   width: '18px', height: '18px', border: '2px solid rgba(255,255,255,0.3)',
                   borderTopColor: '#fff', borderRadius: '50%', animation: 'rotateSlow 0.6s linear infinite',

@@ -1,32 +1,37 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 const Reports = () => {
+  const [reports, setReports] = useState([]);
+
   return (
     <div className="page-content animate-fade-in">
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1.5rem' }}>
-        <button className="btn btn-primary"><ion-icon name="print-outline"></ion-icon> Print Selected</button>
+        <button className="btn btn-primary">
+          <ion-icon name="print-outline"></ion-icon> Print Selected
+        </button>
       </div>
 
       <div className="glass-panel" style={{ padding: '1.5rem' }}>
-        <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
-          <div style={{ flex: 1, padding: '1.5rem', background: 'rgba(0,0,0,0.2)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', textAlign: 'center', cursor: 'pointer' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem', marginBottom: '2rem' }}>
+          <div style={{ padding: '1.5rem', background: 'rgba(0,0,0,0.2)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', textAlign: 'center', cursor: 'pointer' }}>
             <ion-icon name="document-text" style={{ fontSize: '2.5rem', color: 'var(--primary)', marginBottom: '0.5rem' }}></ion-icon>
             <h4 style={{ margin: 0 }}>Medico-Legal Report (MLR)</h4>
-            <p style={{ fontSize: '0.85rem', margin: '5px 0 0 0' }}>Generate clinical court report</p>
+            <p style={{ fontSize: '0.85rem', margin: '5px 0 0 0', color: 'var(--text-muted)' }}>Generate clinical court report</p>
           </div>
-          <div style={{ flex: 1, padding: '1.5rem', background: 'rgba(0,0,0,0.2)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', textAlign: 'center', cursor: 'pointer' }}>
+          <div style={{ padding: '1.5rem', background: 'rgba(0,0,0,0.2)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', textAlign: 'center', cursor: 'pointer' }}>
             <ion-icon name="flask" style={{ fontSize: '2.5rem', color: 'var(--accent)', marginBottom: '0.5rem' }}></ion-icon>
             <h4 style={{ margin: 0 }}>Postmortem Report (PMR)</h4>
-            <p style={{ fontSize: '0.85rem', margin: '5px 0 0 0' }}>Generate autopsy report</p>
+            <p style={{ fontSize: '0.85rem', margin: '5px 0 0 0', color: 'var(--text-muted)' }}>Generate autopsy report</p>
           </div>
-          <div style={{ flex: 1, padding: '1.5rem', background: 'rgba(0,0,0,0.2)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', textAlign: 'center', cursor: 'pointer' }}>
+          <div style={{ padding: '1.5rem', background: 'rgba(0,0,0,0.2)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', textAlign: 'center', cursor: 'pointer' }}>
             <ion-icon name="stats-chart" style={{ fontSize: '2.5rem', color: 'var(--success)', marginBottom: '0.5rem' }}></ion-icon>
             <h4 style={{ margin: 0 }}>Monthly Statistics</h4>
-            <p style={{ fontSize: '0.85rem', margin: '5px 0 0 0' }}>Generate department statistics</p>
+            <p style={{ fontSize: '0.85rem', margin: '5px 0 0 0', color: 'var(--text-muted)' }}>Generate department statistics</p>
           </div>
         </div>
 
-        <h3 style={{ marginTop: '2rem' }}>Recently Generated Reports</h3>
+        <h3 style={{ marginTop: '2rem', fontSize: '1.1rem' }}>Recently Generated Reports</h3>
+        
         <div className="table-container">
           <table className="data-table">
             <thead>
@@ -40,22 +45,28 @@ const Reports = () => {
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td style={{ fontFamily: 'monospace' }}>REP-2026-902</td>
-                <td><span className="badge badge-primary">MLR</span></td>
-                <td>CAS-2026-085</td>
-                <td>Dr. Wickramasinghe</td>
-                <td>Jul 10, 2026</td>
-                <td><button className="btn btn-secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}><ion-icon name="download-outline"></ion-icon> PDF</button></td>
-              </tr>
-              <tr>
-                <td style={{ fontFamily: 'monospace' }}>REP-2026-901</td>
-                <td><span className="badge badge-warning">PMR</span></td>
-                <td>CAS-2026-081</td>
-                <td>Dr. Silva</td>
-                <td>Jul 08, 2026</td>
-                <td><button className="btn btn-secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}><ion-icon name="download-outline"></ion-icon> PDF</button></td>
-              </tr>
+              {reports.length > 0 ? (
+                reports.map((r) => (
+                  <tr key={r.ReportID}>
+                    <td style={{ fontFamily: 'monospace' }}>{r.ReportNumber}</td>
+                    <td><span className="badge badge-primary">{r.ReportType}</span></td>
+                    <td>{r.CaseNumber}</td>
+                    <td>{r.GeneratedBy}</td>
+                    <td>{r.Date}</td>
+                    <td>
+                      <button className="btn btn-secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}>
+                        <ion-icon name="download-outline"></ion-icon> PDF
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="6" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2.5rem' }}>
+                    No generated reports in database yet. Click on a report type above to generate a new court report from your uploaded cases.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

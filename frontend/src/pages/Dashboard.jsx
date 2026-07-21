@@ -1,17 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { dashboardAPI } from '../services/api';
 
 const AnimatedCounter = ({ target, duration = 1500 }) => {
   const [count, setCount] = useState(0);
 
   useEffect(() => {
     let startTime;
-    const numTarget = parseInt(target.replace(/[^0-9]/g, ''));
+    const numTarget = typeof target === 'number' ? target : parseInt(String(target).replace(/[^0-9]/g, '')) || 0;
     
+    if (numTarget === 0) {
+      setCount(0);
+      return;
+    }
+
     const animate = (timestamp) => {
       if (!startTime) startTime = timestamp;
       const progress = Math.min((timestamp - startTime) / duration, 1);
-      // Ease out cubic
       const eased = 1 - Math.pow(1 - progress, 3);
       setCount(Math.floor(eased * numTarget));
       if (progress < 1) requestAnimationFrame(animate);
@@ -24,14 +30,45 @@ const AnimatedCounter = ({ target, duration = 1500 }) => {
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [greeting, setGreeting] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  const [stats, setStats] = useState({
+    activeCases: 0,
+    draftMlefs: 0,
+    courtSummons: 0,
+    pendingLabTests: 0
+  });
+
+  const [recentCases, setRecentCases] = useState([]);
+  const [notifications, setNotifications] = useState([]);
 
   useEffect(() => {
     const hour = new Date().getHours();
     if (hour < 12) setGreeting('Good Morning');
     else if (hour < 17) setGreeting('Good Afternoon');
     else setGreeting('Good Evening');
+
+    const fetchDashboardData = async () => {
+      try {
+        const res = await dashboardAPI.getStats();
+        if (res.success) {
+          setStats(res.stats);
+          setRecentCases(res.recentCases || []);
+          setNotifications(res.notifications || []);
+        }
+      } catch (err) {
+        console.warn('Dashboard API offline, using initial state:', err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
   }, []);
+
+  const displayName = user ? `${user.firstName || user.username}` : 'Doctor';
 
   return (
     <div className="page-content">
@@ -39,7 +76,7 @@ const Dashboard = () => {
       <div className="animate-slide-up" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', animationDelay: '0.1s' }}>
         <div>
           <h1 style={{ fontSize: '1.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            {greeting}, Doctor.
+            {greeting}, {displayName}.
             <span style={{ animation: 'float 3s ease-in-out infinite', display: 'inline-block' }}>👋</span>
           </h1>
           <p style={{ margin: 0 }}>Here is what's happening today in the department.</p>
@@ -61,7 +98,7 @@ const Dashboard = () => {
             <ion-icon name="folder-open"></ion-icon>
           </div>
           <div className="stat-info">
-            <h3><AnimatedCounter target="124" /></h3>
+            <h3><AnimatedCounter target={stats.activeCases} /></h3>
             <p>Active Cases</p>
           </div>
         </div>
@@ -71,7 +108,7 @@ const Dashboard = () => {
             <ion-icon name="document-text"></ion-icon>
           </div>
           <div className="stat-info">
-            <h3><AnimatedCounter target="12" duration={1000} /></h3>
+            <h3><AnimatedCounter target={stats.draftMlefs} duration={1000} /></h3>
             <p>Draft MLEFs</p>
           </div>
         </div>
@@ -81,7 +118,7 @@ const Dashboard = () => {
             <ion-icon name="calendar-clear"></ion-icon>
           </div>
           <div className="stat-info">
-            <h3><AnimatedCounter target="3" duration={800} /></h3>
+            <h3><AnimatedCounter target={stats.courtSummons} duration={800} /></h3>
             <p>Court Summons this Week</p>
           </div>
         </div>
@@ -91,7 +128,7 @@ const Dashboard = () => {
             <ion-icon name="flask"></ion-icon>
           </div>
           <div className="stat-info">
-            <h3><AnimatedCounter target="28" duration={1200} /></h3>
+            <h3><AnimatedCounter target={stats.pendingLabTests} duration={1200} /></h3>
             <p>Pending Lab Tests</p>
           </div>
         </div>
@@ -124,34 +161,30 @@ const Dashboard = () => {
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td style={{ fontFamily: 'monospace' }}>CAS-2026-089</td>
-                  <td>Clinical (Trauma)</td>
-                  <td>A.B. Perera</td>
-                  <td>Today, 09:30 AM</td>
-                  <td><span className="badge badge-warning">Under Investigation</span></td>
-                </tr>
-                <tr>
-                  <td style={{ fontFamily: 'monospace' }}>CAS-2026-088</td>
-                  <td>Autopsy (Accidental)</td>
-                  <td>M.N. Silva</td>
-                  <td>Yesterday</td>
-                  <td><span className="badge badge-primary">PM In Progress</span></td>
-                </tr>
-                <tr>
-                  <td style={{ fontFamily: 'monospace' }}>CAS-2026-087</td>
-                  <td>Clinical (Abuse)</td>
-                  <td>Confidential</td>
-                  <td>Jul 09, 2026</td>
-                  <td><span className="badge badge-success">Closed</span></td>
-                </tr>
-                <tr>
-                  <td style={{ fontFamily: 'monospace' }}>CAS-2026-085</td>
-                  <td>Autopsy (Homicidal)</td>
-                  <td>K. Jayasuriya</td>
-                  <td>Jul 08, 2026</td>
-                  <td><span className="badge badge-danger">Pending Court</span></td>
-                </tr>
+                {recentCases.length > 0 ? (
+                  recentCases.map((c) => (
+                    <tr key={c.CaseID || c.CaseNumber}>
+                      <td style={{ fontFamily: 'monospace' }}>{c.CaseNumber}</td>
+                      <td>{c.CaseType} ({c.SubCategory || 'N/A'})</td>
+                      <td>{c.FirstName ? `${c.FirstName} ${c.LastName || ''}` : 'Confidential'}</td>
+                      <td>{c.CreatedAt ? new Date(c.CreatedAt).toLocaleDateString() : 'Today'}</td>
+                      <td>
+                        <span className={`badge ${
+                          c.Status === 'Completed' || c.Status === 'Closed' ? 'badge-success' :
+                          c.Status === 'InProgress' ? 'badge-primary' : 'badge-warning'
+                        }`}>
+                          {c.Status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="5" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>
+                      No active cases in database yet. Click "Open New Case" to add a new record.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -165,31 +198,21 @@ const Dashboard = () => {
           </h3>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            
-            <div className="alert-card" style={{ display: 'flex', gap: '1rem', padding: '1rem', background: 'rgba(0,0,0,0.2)', borderLeft: '3px solid var(--danger)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', transition: 'all 0.2s ease' }}>
-              <ion-icon name="alert-circle" style={{ color: 'var(--danger)', fontSize: '1.5rem', flexShrink: 0 }}></ion-icon>
-              <div>
-                <h4 style={{ margin: '0 0 0.25rem', fontSize: '0.95rem' }}>Court Appearance</h4>
-                <p style={{ margin: 0, fontSize: '0.85rem' }}>Magistrate Court Kandy regarding Case CAS-2026-042 on July 14, 2026.</p>
+            {notifications.length > 0 ? (
+              notifications.map((n) => (
+                <div key={n.NotificationID} className="alert-card" style={{ display: 'flex', gap: '1rem', padding: '1rem', background: 'rgba(0,0,0,0.2)', borderLeft: '3px solid var(--primary)', borderRadius: 'var(--radius-sm)' }}>
+                  <ion-icon name="information-circle" style={{ color: 'var(--primary)', fontSize: '1.5rem', flexShrink: 0 }}></ion-icon>
+                  <div>
+                    <h4 style={{ margin: '0 0 0.25rem', fontSize: '0.95rem' }}>{n.Title}</h4>
+                    <p style={{ margin: 0, fontSize: '0.85rem' }}>{n.Message}</p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', padding: '1rem', textAlign: 'center' }}>
+                No pending notifications or court summons.
               </div>
-            </div>
-
-            <div className="alert-card" style={{ display: 'flex', gap: '1rem', padding: '1rem', background: 'rgba(0,0,0,0.2)', borderLeft: '3px solid var(--warning)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', transition: 'all 0.2s ease' }}>
-              <ion-icon name="document-text" style={{ color: 'var(--warning)', fontSize: '1.5rem', flexShrink: 0 }}></ion-icon>
-              <div>
-                <h4 style={{ margin: '0 0 0.25rem', fontSize: '0.95rem' }}>MLEF Draft Pending</h4>
-                <p style={{ margin: 0, fontSize: '0.85rem' }}>MLEF for Patient #1024 has not been finalized yet.</p>
-              </div>
-            </div>
-            
-            <div className="alert-card" style={{ display: 'flex', gap: '1rem', padding: '1rem', background: 'rgba(0,0,0,0.2)', borderLeft: '3px solid var(--primary)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', transition: 'all 0.2s ease' }}>
-              <ion-icon name="flask" style={{ color: 'var(--primary)', fontSize: '1.5rem', flexShrink: 0 }}></ion-icon>
-              <div>
-                <h4 style={{ margin: '0 0 0.25rem', fontSize: '0.95rem' }}>Lab Results Ready</h4>
-                <p style={{ margin: 0, fontSize: '0.85rem' }}>Toxicology results for Autopsy PM-2026-031 are available.</p>
-              </div>
-            </div>
-
+            )}
           </div>
         </div>
 
