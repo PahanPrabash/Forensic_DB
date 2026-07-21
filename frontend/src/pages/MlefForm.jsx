@@ -2,13 +2,48 @@ import React, { useState } from 'react';
 
 const MlefForm = () => {
   const [activeTab, setActiveTab] = useState(0);
+  const [formData, setFormData] = useState({
+    MLEFNumber: `MLEF/2026/0${Math.floor(Math.random() * 90) + 10}`,
+    CaseID: '1',
+    PatientID: '1',
+    ExaminingDoctorID: '1',
+    ExaminationDate: '',
+    ReferralSource: 'Hospital Ward',
+    LegalAuthorization: 'MLEF Request',
+    ClinicalFindings: '',
+    Injuries: '',
+    Opinion: ''
+  });
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSave = async (status) => {
+    try {
+      // Assuming backend expects Status in the payload
+      const payload = { ...formData, Status: status };
+      const res = await fetch('/api/mlef', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        alert(`MLEF ${status === 'Finalized' ? 'Finalized' : 'Saved as Draft'} successfully!`);
+      } else {
+        alert('Failed to save MLEF');
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   return (
     <div className="page-content animate-fade-in">
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginBottom: '1.5rem' }}>
         <span className="badge badge-warning" style={{ alignSelf: 'center' }}>Draft Mode</span>
-        <button className="btn btn-secondary"><ion-icon name="save-outline"></ion-icon> Save Draft</button>
-        <button className="btn btn-primary"><ion-icon name="checkmark-circle-outline"></ion-icon> Finalize MLEF</button>
+        <button type="button" className="btn btn-secondary" onClick={() => handleSave('Draft')}><ion-icon name="save-outline"></ion-icon> Save Draft</button>
+        <button type="button" className="btn btn-primary" onClick={() => handleSave('Finalized')}><ion-icon name="checkmark-circle-outline"></ion-icon> Finalize MLEF</button>
       </div>
 
       <div className="glass-panel" style={{ padding: '2rem', maxWidth: '1000px', margin: '0 auto' }}>
@@ -29,28 +64,28 @@ const MlefForm = () => {
           ))}
         </div>
 
-        <form>
+        <form onSubmit={(e) => e.preventDefault()}>
           {activeTab === 0 && (
             <>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
                 <div className="form-group">
                   <label className="form-label">Linked Case</label>
                   <div style={{ display: 'flex', gap: '10px' }}>
-                    <input type="text" className="form-control" value="CAS-2026-089" readOnly style={{ background: 'rgba(0,0,0,0.2)' }} />
+                    <input type="text" className="form-control" value="CW/2026/001" readOnly style={{ background: 'rgba(0,0,0,0.05)' }} />
                     <button type="button" className="btn btn-secondary">Select</button>
                   </div>
                 </div>
                 <div className="form-group">
                   <label className="form-label">MLEF Number (Auto-generated)</label>
-                  <input type="text" className="form-control" value="MLEF/2026/045" readOnly style={{ background: 'rgba(0,0,0,0.2)' }} />
+                  <input type="text" className="form-control" value={formData.MLEFNumber} readOnly style={{ background: 'rgba(0,0,0,0.05)' }} />
                 </div>
                 <div className="form-group">
                   <label className="form-label">Examining Doctor</label>
-                  <input type="text" className="form-control" value="Dr. C. Wickramasinghe" readOnly style={{ background: 'rgba(0,0,0,0.2)' }} />
+                  <input type="text" className="form-control" value="Dr. C. Wickramasinghe" readOnly style={{ background: 'rgba(0,0,0,0.05)' }} />
                 </div>
                 <div className="form-group">
                   <label className="form-label">Examination Date & Time</label>
-                  <input type="datetime-local" className="form-control" />
+                  <input type="datetime-local" name="ExaminationDate" className="form-control" value={formData.ExaminationDate} onChange={handleChange} required />
                 </div>
               </div>
 
@@ -58,24 +93,24 @@ const MlefForm = () => {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
                 <div className="form-group">
                   <label className="form-label">Referral Source</label>
-                  <select className="form-control">
-                    <option>Hospital Ward</option>
-                    <option>Police Station</option>
-                    <option>Attorney General Office</option>
-                    <option>Human Rights Commission</option>
+                  <select name="ReferralSource" className="form-control" value={formData.ReferralSource} onChange={handleChange}>
+                    <option value="Hospital Ward">Hospital Ward</option>
+                    <option value="Police Station">Police Station</option>
+                    <option value="Attorney General Office">Attorney General Office</option>
+                    <option value="Human Rights Commission">Human Rights Commission</option>
                   </select>
                 </div>
                 <div className="form-group">
                   <label className="form-label">Legal Document Type</label>
-                  <select className="form-control">
-                    <option>MLEF Request</option>
-                    <option>Request Letter</option>
-                    <option>Court Order</option>
+                  <select name="LegalAuthorization" className="form-control" value={formData.LegalAuthorization} onChange={handleChange}>
+                    <option value="MLEF Request">MLEF Request</option>
+                    <option value="Request Letter">Request Letter</option>
+                    <option value="Court Order">Court Order</option>
                   </select>
                 </div>
                 <div className="form-group" style={{ gridColumn: '1 / -1' }}>
                   <label className="form-label">Document Upload (Scanned Copy)</label>
-                  <div style={{ border: '2px dashed var(--border)', padding: '2rem', textAlign: 'center', borderRadius: 'var(--radius-sm)', color: 'var(--text-muted)', cursor: 'pointer', background: 'rgba(0,0,0,0.2)' }}>
+                  <div style={{ border: '2px dashed var(--border)', padding: '2rem', textAlign: 'center', borderRadius: 'var(--radius-sm)', color: 'var(--text-muted)', cursor: 'pointer', background: 'rgba(0,0,0,0.05)' }}>
                     <ion-icon name="cloud-upload-outline" style={{ fontSize: '2rem', marginBottom: '0.5rem' }}></ion-icon>
                     <div>Drag & Drop or Click to Upload Police Request / Court Order</div>
                   </div>
@@ -90,11 +125,11 @@ const MlefForm = () => {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem' }}>
                 <div className="form-group">
                   <label className="form-label">General Clinical Findings</label>
-                  <textarea className="form-control" rows="4" placeholder="Enter general findings..."></textarea>
+                  <textarea name="ClinicalFindings" className="form-control" rows="4" placeholder="Enter general findings..." value={formData.ClinicalFindings} onChange={handleChange}></textarea>
                 </div>
                 <div className="form-group">
                   <label className="form-label">Detailed Injury Description</label>
-                  <textarea className="form-control" rows="6" placeholder="List and describe injuries (Abrasions, Lacerations, Contusions, etc.)"></textarea>
+                  <textarea name="Injuries" className="form-control" rows="6" placeholder="List and describe injuries (Abrasions, Lacerations, Contusions, etc.)" value={formData.Injuries} onChange={handleChange}></textarea>
                 </div>
               </div>
             </>
@@ -106,14 +141,14 @@ const MlefForm = () => {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem' }}>
                 <div className="form-group" style={{ gridColumn: '1 / -1' }}>
                   <label className="form-label">Body Diagram Annotation Upload</label>
-                  <div style={{ border: '2px dashed var(--border)', padding: '2rem', textAlign: 'center', borderRadius: 'var(--radius-sm)', color: 'var(--text-muted)', cursor: 'pointer', background: 'rgba(0,0,0,0.2)' }}>
+                  <div style={{ border: '2px dashed var(--border)', padding: '2rem', textAlign: 'center', borderRadius: 'var(--radius-sm)', color: 'var(--text-muted)', cursor: 'pointer', background: 'rgba(0,0,0,0.05)' }}>
                     <ion-icon name="body-outline" style={{ fontSize: '2rem', marginBottom: '0.5rem' }}></ion-icon>
                     <div>Upload Annotated Body Diagrams</div>
                   </div>
                 </div>
                 <div className="form-group">
                   <label className="form-label">Weapon Used (Suspected)</label>
-                  <select className="form-control">
+                  <select name="WeaponUsed" className="form-control" value={formData.WeaponUsed} onChange={handleChange}>
                     <option value="">Select Weapon Category</option>
                     <option value="blunt">Blunt Object</option>
                     <option value="sharp">Sharp Object</option>
@@ -124,7 +159,7 @@ const MlefForm = () => {
                 </div>
                 <div className="form-group">
                   <label className="form-label">Circumstances of Injury</label>
-                  <textarea className="form-control" rows="3" placeholder="Briefly describe the circumstances..."></textarea>
+                  <textarea name="Circumstances" className="form-control" rows="3" placeholder="Briefly describe the circumstances..." value={formData.Circumstances} onChange={handleChange}></textarea>
                 </div>
               </div>
             </>
@@ -136,7 +171,7 @@ const MlefForm = () => {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem' }}>
                 <div className="form-group">
                   <label className="form-label">Category of Hurt</label>
-                  <select className="form-control">
+                  <select name="CategoryOfHurt" className="form-control" value={formData.CategoryOfHurt} onChange={handleChange}>
                     <option value="">Select Category...</option>
                     <option value="non-grievous">Non-Grievous</option>
                     <option value="grievous">Grievous Hurt</option>
@@ -146,7 +181,7 @@ const MlefForm = () => {
                 </div>
                 <div className="form-group">
                   <label className="form-label">Final Opinion</label>
-                  <textarea className="form-control" rows="5" placeholder="Enter final medical opinion..."></textarea>
+                  <textarea name="Opinion" className="form-control" rows="5" placeholder="Enter final medical opinion..." value={formData.Opinion} onChange={handleChange}></textarea>
                 </div>
                 <div className="form-group">
                   <label className="form-label">Digital Signature</label>

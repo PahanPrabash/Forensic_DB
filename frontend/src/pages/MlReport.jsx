@@ -5,45 +5,41 @@ const MlReport = () => {
   const [selectedMLR, setSelectedMLR] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
 
-  // Sample MLR data matching the database schema
-  const mlrRecords = [
-    {
-      id: 1, mlrNumber: 'MLR/2026/001', mlefNumber: 'MLEF/2026/001',
-      caseNumber: 'CW/2026/001', patient: 'Kamal Jayasuriya', nic: '198512345678',
-      doctor: 'Dr. C. Wickramasinghe', designation: 'Consultant JMO',
-      reportDate: '2026-01-20', status: 'Finalized', certificate: 'CR/2026/001',
-      category: 'Trauma', caseType: 'Clinical',
-      content: 'I, Dr. Chaminda Wickramasinghe, Consultant Judicial Medical Officer, Teaching Hospital Peradeniya, examined Mr. Kamal Jayasuriya (NIC: 198512345678) on 16th January 2026 at 09:30 hours at the request of Kandy Police.\n\nHISTORY: The patient states he was assaulted by two unknown persons with an iron rod on 15/01/2026 at approximately 20:00 hours near Temple Road, Kandy.\n\nFINDINGS:\n1. Contusion (3x2 cm) over left temporal region\n2. Laceration (4 cm) over right forearm\n3. Abrasion (5x3 cm) over right knee\n4. X-ray confirmed fractures of left 5th and 6th ribs',
-      conclusion: 'The injuries are consistent with assault using a hard blunt weapon such as an iron rod. The fracture of ribs constitutes GRIEVOUS HURT under Section 311 of the Penal Code. The injuries could not have been self-inflicted.'
-    },
-    {
-      id: 2, mlrNumber: 'MLR/2026/002', mlefNumber: 'MLEF/2026/002',
-      caseNumber: 'CW/2026/002', patient: 'Nimal Rathnayake', nic: '199287654321',
-      doctor: 'Dr. N. Fernando', designation: 'Senior Registrar',
-      reportDate: '2026-02-15', status: 'Draft', certificate: null,
-      category: 'Domestic Abuse', caseType: 'Clinical',
-      content: 'I, Dr. Niluka Fernando, Senior Registrar in Forensic Medicine, Teaching Hospital Peradeniya, examined Mr. Nimal Rathnayake (NIC: 199287654321) on 9th February 2026.\n\nHISTORY: Patient admitted to Ward 12 following a domestic incident.\n\nFINDINGS:\n1. Healing contusion over left cheek (5-7 days old)\n2. Fresh contusion over right upper arm\n3. Linear abrasion over back consistent with belt mark',
-      conclusion: 'The pattern of old and new injuries at different stages of healing is consistent with repeated physical abuse (domestic violence). Individual injuries are NON-GRIEVOUS.'
-    },
-    {
-      id: 3, mlrNumber: 'MLR/2026/004', mlefNumber: 'MLEF/2026/004',
-      caseNumber: 'CW/2026/004', patient: 'Child (Name Withheld)', nic: 'PROTECTED',
-      doctor: 'Dr. N. Fernando', designation: 'Senior Registrar',
-      reportDate: '2026-04-28', status: 'Submitted to Court', certificate: 'CR/2026/004',
-      category: 'Child Abuse', caseType: 'Clinical',
-      content: 'I, Dr. Niluka Fernando, examined the child (age 8 years) on 23rd April 2026.\n\nFINDINGS:\n1. Multiple circular cigarette burn marks on forearms\n2. Parallel linear bruises on buttocks (cane marks)\n3. Healing fracture of left ulna (3 weeks old)',
-      conclusion: 'The injuries are GRIEVOUS and strongly suggestive of repeated child abuse (Non-Accidental Injury). Referred to NCPA.'
-    },
-    {
-      id: 4, mlrNumber: 'MLR/2026/005', mlefNumber: 'MLEF/2026/005',
-      caseNumber: 'CW/2026/005', patient: 'Ruwan Wijesinghe', nic: '197845678901',
-      doctor: 'Dr. C. Wickramasinghe', designation: 'Consultant JMO',
-      reportDate: '2026-05-10', status: 'Finalized', certificate: 'CR/2026/005',
-      category: 'Age Estimation', caseType: 'Clinical',
-      content: 'Age estimation examination as per Magistrate Court order.\n\nMETHODS:\n1. Dental examination and OPG X-ray\n2. Skeletal maturity assessment\n3. Physical maturity assessment (Tanner staging)',
-      conclusion: 'Estimated age: 25-30 years. The individual is definitively above the age of 18 years.'
+  const [mlrRecords, setMlrRecords] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  React.useEffect(() => {
+    fetchMLRs();
+  }, []);
+
+  const fetchMLRs = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/mlr');
+      const data = await res.json();
+      setMlrRecords((data.data || []).map(r => ({
+        id: r.MLRID,
+        mlrNumber: r.MLRNumber,
+        mlefNumber: r.MLEFNumber,
+        caseNumber: r.CaseNumber,
+        patient: r.PatientName,
+        nic: r.NIC || 'N/A', // NIC might not be in the list, fetched in detail
+        doctor: r.PreparedByDoctor,
+        designation: r.Designation || '',
+        reportDate: r.ReportDate ? new Date(r.ReportDate).toISOString().split('T')[0] : '',
+        status: r.Status,
+        certificate: r.CertificateOfReceipt,
+        category: r.SubCategory,
+        caseType: r.CaseType,
+        content: r.ReportContent || '', // these will be fetched in detail
+        conclusion: r.Conclusion || ''
+      })));
+    } catch (err) {
+      console.error('Failed to fetch MLRs:', err);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
   const getStatusBadge = (status) => {
     const map = {
@@ -54,9 +50,50 @@ const MlReport = () => {
     return map[status] || 'badge-primary';
   };
 
-  const handleViewReport = (mlr) => {
-    setSelectedMLR(mlr);
-    setActiveView('detail');
+  const handleViewReport = async (mlr) => {
+    try {
+      const res = await fetch(`/api/mlr/${mlr.id}`);
+      const detail = await res.json();
+      if (res.ok && detail.data) {
+        setSelectedMLR({
+          ...mlr,
+          content: detail.data.ReportContent || 'No content provided.',
+          conclusion: detail.data.Conclusion || 'No conclusion provided.'
+        });
+        setActiveView('detail');
+      }
+    } catch(err) {
+      console.error(err);
+    }
+  };
+
+  const handleCreateMLR = async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const payload = {
+      MLEFID: formData.get('MLEFID'),
+      CaseID: '1', // Hardcoded for demo since we need the case ID
+      PreparedBy: '1', // Hardcoded doctor ID
+      ReportDate: formData.get('ReportDate'),
+      ReportContent: formData.get('ReportContent'),
+      Conclusion: formData.get('Conclusion')
+    };
+
+    try {
+      const res = await fetch('/api/mlr', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        setActiveView('list');
+        fetchMLRs();
+      } else {
+        alert('Failed to create MLR');
+      }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   // ─── Print Preview Modal ───────────────────────────────────────────────
@@ -114,7 +151,7 @@ const MlReport = () => {
 
         <div style={{ textAlign: 'center', marginTop: '2rem' }}>
           <button onClick={() => window.print()} style={{
-            padding: '10px 30px', background: '#3b82f6', color: '#fff', border: 'none',
+            padding: '10px 30px', background: '#38bdf8', color: '#fff', border: 'none',
             borderRadius: '6px', cursor: 'pointer', fontSize: '0.95rem', fontWeight: '500'
           }}>
             🖨️ Print Report
@@ -225,7 +262,7 @@ const MlReport = () => {
                     <td>{mlr.caseNumber}</td>
                     <td>{mlr.patient}</td>
                     <td>
-                      <span style={{ fontSize: '0.8rem', padding: '2px 8px', borderRadius: '4px', background: 'rgba(14, 165, 233, 0.1)', color: '#0ea5e9' }}>
+                      <span style={{ fontSize: '0.8rem', padding: '2px 8px', borderRadius: '4px', background: 'rgba(14, 165, 233, 0.1)', color: '#7dd3fc' }}>
                         {mlr.category}
                       </span>
                     </td>
@@ -269,8 +306,8 @@ const MlReport = () => {
             {/* Patient & Case Info Bar */}
             <div style={{
               display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem',
-              padding: '1rem 1.25rem', background: 'rgba(59, 130, 246, 0.05)', borderRadius: 'var(--radius-sm)',
-              border: '1px solid rgba(59, 130, 246, 0.1)', marginBottom: '1.5rem'
+              padding: '1rem 1.25rem', background: 'rgba(56, 189, 248, 0.05)', borderRadius: 'var(--radius-sm)',
+              border: '1px solid rgba(56, 189, 248, 0.1)', marginBottom: '1.5rem'
             }}>
               <div>
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Patient</div>
@@ -330,7 +367,7 @@ const MlReport = () => {
               ) : (
                 <div style={{
                   whiteSpace: 'pre-wrap', padding: '1.25rem',
-                  background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(59, 130, 246, 0.05))',
+                  background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(56, 189, 248, 0.05))',
                   borderRadius: 'var(--radius-sm)', lineHeight: '1.8', fontSize: '0.95rem',
                   fontFamily: 'Georgia, serif', border: '1px solid rgba(16, 185, 129, 0.15)', fontWeight: '500'
                 }}>
@@ -442,12 +479,14 @@ const MlReport = () => {
             </button>
           </div>
 
-          <form>
+          <form onSubmit={handleCreateMLR}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
               <div className="form-group">
                 <label className="form-label">Linked MLEF *</label>
-                <select className="form-control">
+                <select name="MLEFID" className="form-control" required>
                   <option value="">Select MLEF to link...</option>
+                  <option value="1">MLEF/2026/001 — CW/2026/001 — Kamal Jayasuriya (Trauma)</option>
+                  <option value="2">MLEF/2026/002 — CW/2026/002 — Nimal Rathnayake (Domestic Abuse)</option>
                   <option value="3">MLEF/2026/003 — CW/2026/003 — Sanduni Herath (Sexual Abuse)</option>
                 </select>
                 <small style={{ color: 'var(--text-muted)', fontSize: '0.78rem', marginTop: '4px', display: 'block' }}>
@@ -464,18 +503,18 @@ const MlReport = () => {
               </div>
               <div className="form-group">
                 <label className="form-label">Report Date *</label>
-                <input type="date" className="form-control" />
+                <input name="ReportDate" type="date" className="form-control" required />
               </div>
             </div>
 
             <div className="form-group" style={{ marginTop: '1rem' }}>
               <label className="form-label">Report Content *</label>
-              <textarea className="form-control" rows="10" placeholder="Enter the full medico-legal report content including history, examination findings, and detailed observations..." style={{ fontFamily: 'Georgia, serif', lineHeight: '1.8' }}></textarea>
+              <textarea name="ReportContent" className="form-control" rows="10" placeholder="Enter the full medico-legal report content including history, examination findings, and detailed observations..." style={{ fontFamily: 'Georgia, serif', lineHeight: '1.8' }} required></textarea>
             </div>
 
             <div className="form-group">
               <label className="form-label">Opinion & Conclusion *</label>
-              <textarea className="form-control" rows="4" placeholder="Enter your medical opinion and legal conclusion..." style={{ fontFamily: 'Georgia, serif', lineHeight: '1.8' }}></textarea>
+              <textarea name="Conclusion" className="form-control" rows="4" placeholder="Enter your medical opinion and legal conclusion..." style={{ fontFamily: 'Georgia, serif', lineHeight: '1.8' }} required></textarea>
             </div>
 
             <div className="form-group">

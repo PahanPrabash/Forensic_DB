@@ -4,65 +4,105 @@ const ReferralsAndReviews = () => {
   const [activeTab, setActiveTab] = useState('referrals');
   const [showCreateReferral, setShowCreateReferral] = useState(false);
   const [showCreateReview, setShowCreateReview] = useState(false);
+  const [referrals, setReferrals] = useState([]);
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Sample referral data
-  const referrals = [
-    {
-      id: 1, caseNumber: 'CW/2026/001', mlefNumber: 'MLEF/2026/001', patient: 'Kamal Jayasuriya',
-      referredTo: 'Radiology — Teaching Hospital Peradeniya',
-      referralDate: '2026-01-16', reason: 'X-ray of left rib cage to confirm suspected fractures of 5th and 6th ribs',
-      responseReceived: true, responseDate: '2026-01-17',
-      responseFindings: 'X-ray confirms non-displaced fractures of left 5th and 6th ribs. No pneumothorax. Conservative management advised.'
-    },
-    {
-      id: 2, caseNumber: 'CW/2026/002', mlefNumber: 'MLEF/2026/002', patient: 'Nimal Rathnayake',
-      referredTo: 'Psychiatry — Teaching Hospital Peradeniya',
-      referralDate: '2026-02-10', reason: 'Psychological assessment for domestic violence victim — exhibits symptoms of PTSD and depression',
-      responseReceived: true, responseDate: '2026-02-20',
-      responseFindings: 'Patient diagnosed with PTSD and moderate depressive disorder. Commenced on counseling and pharmacotherapy. Follow-up scheduled.'
-    },
-    {
-      id: 3, caseNumber: 'CW/2026/004', mlefNumber: 'MLEF/2026/004', patient: 'Child (Protected)',
-      referredTo: 'Paediatrics — Teaching Hospital Peradeniya',
-      referralDate: '2026-04-23', reason: 'Child abuse case — requires paediatric evaluation for growth assessment and nutritional status',
-      responseReceived: false, responseDate: null, responseFindings: null
-    },
-    {
-      id: 4, caseNumber: 'CW/2026/003', mlefNumber: 'MLEF/2026/003', patient: 'Sanduni Herath',
-      referredTo: 'Gynaecology — Teaching Hospital Peradeniya',
-      referralDate: '2026-03-11', reason: 'Specialist gynecological examination required for sexual assault case',
-      responseReceived: true, responseDate: '2026-03-15',
-      responseFindings: 'Detailed gynecological examination completed. Findings documented and sealed report submitted to JMO.'
-    }
-  ];
+  React.useEffect(() => {
+    fetchData();
+  }, []);
 
-  // Sample review appointment data
-  const reviews = [
-    {
-      id: 1, caseNumber: 'CW/2026/001', patient: 'Kamal Jayasuriya', phone: '0771234567',
-      reviewType: 'Outpatient', scheduledDate: '2026-02-16', doctor: 'Dr. C. Wickramasinghe',
-      notes: 'Review after 4 weeks to assess healing of rib fractures and document recovery progress for court report',
-      status: 'Completed'
-    },
-    {
-      id: 2, caseNumber: 'CW/2026/002', patient: 'Nimal Rathnayake', phone: '0782345678',
-      reviewType: 'Outpatient', scheduledDate: '2026-03-09', doctor: 'Dr. N. Fernando',
-      notes: 'Follow-up to assess new injuries and collect updated psychiatric report for MLR finalization',
-      status: 'Scheduled'
-    },
-    {
-      id: 3, caseNumber: 'CW/2026/004', patient: 'Child (Protected)', phone: '0764567890',
-      reviewType: 'Inward', scheduledDate: '2026-05-23', doctor: 'Dr. N. Fernando',
-      notes: 'Follow-up examination — reassess healing of ulna fracture and check for new injuries',
-      status: 'Scheduled'
-    },
-    {
-      id: 4, caseNumber: 'CW/2026/003', patient: 'Sanduni Herath', phone: '0793456789',
-      reviewType: 'Outpatient', scheduledDate: '2026-04-11', doctor: 'Dr. C. Wickramasinghe',
-      notes: 'Review appointment to discuss laboratory results and finalize MLR',
-      status: 'Cancelled'
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [refRes, revRes] = await Promise.all([
+        fetch('/api/referrals').then(r => r.json()),
+        fetch('/api/referrals/reviews').then(r => r.json())
+      ]);
+      setReferrals((refRes.data || []).map(r => ({
+        id: r.ReferralID,
+        caseNumber: r.CaseNumber,
+        mlefNumber: r.MLEFNumber || 'N/A',
+        patient: r.PatientName,
+        referredTo: r.ReferredTo,
+        referralDate: r.ReferralDate ? new Date(r.ReferralDate).toISOString().split('T')[0] : '',
+        reason: r.ReferralReason,
+        responseReceived: !!r.ResponseReceived,
+        responseDate: r.ResponseDate ? new Date(r.ResponseDate).toISOString().split('T')[0] : null,
+        responseFindings: r.ResponseFindings
+      })));
+      setReviews((revRes.data || []).map(r => ({
+        id: r.ReviewID,
+        caseNumber: r.CaseNumber,
+        patient: r.PatientName,
+        phone: r.PatientPhone || 'N/A',
+        reviewType: r.ReviewType,
+        scheduledDate: r.ScheduledDate ? new Date(r.ScheduledDate).toISOString().split('T')[0] : '',
+        doctor: r.DoctorName || 'N/A',
+        notes: r.ReviewNotes,
+        status: r.Status
+      })));
+    } catch (err) {
+      console.error('Failed to fetch data:', err);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  const handleCreateReferral = async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const payload = {
+      CaseID: formData.get('CaseID'),
+      MLEFID: formData.get('MLEFID') || null,
+      ReferredTo: formData.get('ReferredTo'),
+      ReferralDate: formData.get('ReferralDate'),
+      ReferralReason: formData.get('ReferralReason')
+    };
+    try {
+      const res = await fetch('/api/referrals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        setShowCreateReferral(false);
+        fetchData();
+      } else {
+        alert('Failed to create referral');
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleCreateReview = async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const payload = {
+      CaseID: formData.get('CaseID'),
+      PatientID: formData.get('PatientID'),
+      ReviewType: formData.get('ReviewType'),
+      ScheduledDate: formData.get('ScheduledDate'),
+      DoctorID: formData.get('DoctorID') || null,
+      ReviewNotes: formData.get('ReviewNotes')
+    };
+    try {
+      const res = await fetch('/api/referrals/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        setShowCreateReview(false);
+        fetchData();
+      } else {
+        alert('Failed to schedule review');
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const getReviewStatusBadge = (status) => {
     const map = { 'Scheduled': 'badge-primary', 'Completed': 'badge-success', 'Cancelled': 'badge-danger' };
@@ -78,11 +118,11 @@ const ReferralsAndReviews = () => {
   };
 
   const getDepartmentColor = (dept) => {
-    if (dept.includes('Radiology')) return '#3b82f6';
+    if (dept.includes('Radiology')) return '#38bdf8';
     if (dept.includes('Psychiatry')) return '#8b5cf6';
     if (dept.includes('Paediatrics')) return '#f59e0b';
     if (dept.includes('Gynaecology')) return '#ec4899';
-    return '#0ea5e9';
+    return '#7dd3fc';
   };
 
   return (
@@ -177,50 +217,50 @@ const ReferralsAndReviews = () => {
                   <ion-icon name="close-outline"></ion-icon>
                 </button>
               </div>
-              <form>
+              <form onSubmit={handleCreateReferral}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
                   <div className="form-group">
                     <label className="form-label">Linked Case *</label>
-                    <select className="form-control">
+                    <select name="CaseID" className="form-control" required>
                       <option value="">Select case...</option>
-                      <option>CW/2026/001 — Kamal Jayasuriya (Trauma)</option>
-                      <option>CW/2026/002 — Nimal Rathnayake (Domestic Abuse)</option>
-                      <option>CW/2026/003 — Sanduni Herath (Sexual Abuse)</option>
-                      <option>CW/2026/004 — Child (Child Abuse)</option>
-                      <option>CW/2026/005 — Ruwan Wijesinghe (Age Estimation)</option>
+                      <option value="1">CW/2026/001 — Kamal Jayasuriya (Trauma)</option>
+                      <option value="2">CW/2026/002 — Nimal Rathnayake (Domestic Abuse)</option>
+                      <option value="3">CW/2026/003 — Sanduni Herath (Sexual Abuse)</option>
+                      <option value="4">CW/2026/004 — Child (Child Abuse)</option>
+                      <option value="5">CW/2026/005 — Ruwan Wijesinghe (Age Estimation)</option>
                     </select>
                   </div>
                   <div className="form-group">
                     <label className="form-label">Linked MLEF (optional)</label>
-                    <select className="form-control">
+                    <select name="MLEFID" className="form-control">
                       <option value="">Select MLEF...</option>
-                      <option>MLEF/2026/001</option>
-                      <option>MLEF/2026/002</option>
-                      <option>MLEF/2026/003</option>
-                      <option>MLEF/2026/004</option>
-                      <option>MLEF/2026/005</option>
+                      <option value="1">MLEF/2026/001</option>
+                      <option value="2">MLEF/2026/002</option>
+                      <option value="3">MLEF/2026/003</option>
+                      <option value="4">MLEF/2026/004</option>
+                      <option value="5">MLEF/2026/005</option>
                     </select>
                   </div>
                   <div className="form-group">
                     <label className="form-label">Referred To *</label>
-                    <select className="form-control">
+                    <select name="ReferredTo" className="form-control" required>
                       <option value="">Select department...</option>
-                      <option>Radiology — Teaching Hospital Peradeniya</option>
-                      <option>Psychiatry — Teaching Hospital Peradeniya</option>
-                      <option>Paediatrics — Teaching Hospital Peradeniya</option>
-                      <option>Gynaecology — Teaching Hospital Peradeniya</option>
-                      <option>Orthopaedics — Teaching Hospital Peradeniya</option>
-                      <option>General Surgery — Teaching Hospital Peradeniya</option>
-                      <option>Government Analyst Department</option>
+                      <option value="Radiology — Teaching Hospital Peradeniya">Radiology — Teaching Hospital Peradeniya</option>
+                      <option value="Psychiatry — Teaching Hospital Peradeniya">Psychiatry — Teaching Hospital Peradeniya</option>
+                      <option value="Paediatrics — Teaching Hospital Peradeniya">Paediatrics — Teaching Hospital Peradeniya</option>
+                      <option value="Gynaecology — Teaching Hospital Peradeniya">Gynaecology — Teaching Hospital Peradeniya</option>
+                      <option value="Orthopaedics — Teaching Hospital Peradeniya">Orthopaedics — Teaching Hospital Peradeniya</option>
+                      <option value="General Surgery — Teaching Hospital Peradeniya">General Surgery — Teaching Hospital Peradeniya</option>
+                      <option value="Government Analyst Department">Government Analyst Department</option>
                     </select>
                   </div>
                   <div className="form-group">
                     <label className="form-label">Referral Date *</label>
-                    <input type="date" className="form-control" />
+                    <input name="ReferralDate" type="date" className="form-control" required />
                   </div>
                   <div className="form-group" style={{ gridColumn: '1 / -1' }}>
                     <label className="form-label">Referral Reason *</label>
-                    <textarea className="form-control" rows="3" placeholder="Describe the reason for this referral..."></textarea>
+                    <textarea name="ReferralReason" className="form-control" rows="3" placeholder="Describe the reason for this referral..." required></textarea>
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', paddingTop: '1rem' }}>
@@ -319,39 +359,40 @@ const ReferralsAndReviews = () => {
                   <ion-icon name="close-outline"></ion-icon>
                 </button>
               </div>
-              <form>
+              <form onSubmit={handleCreateReview}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
                   <div className="form-group">
                     <label className="form-label">Case *</label>
-                    <select className="form-control">
+                    <select name="CaseID" className="form-control" required>
                       <option value="">Select case...</option>
-                      <option>CW/2026/001 — Kamal Jayasuriya</option>
-                      <option>CW/2026/002 — Nimal Rathnayake</option>
-                      <option>CW/2026/003 — Sanduni Herath</option>
-                      <option>CW/2026/004 — Child (Protected)</option>
+                      <option value="1">CW/2026/001 — Kamal Jayasuriya</option>
+                      <option value="2">CW/2026/002 — Nimal Rathnayake</option>
+                      <option value="3">CW/2026/003 — Sanduni Herath</option>
+                      <option value="4">CW/2026/004 — Child (Protected)</option>
                     </select>
                   </div>
+                  <input type="hidden" name="PatientID" value="1" /> {/* Hardcoded for demo since Patient ID isn't directly selected here normally without a lookup */}
                   <div className="form-group">
                     <label className="form-label">Review Type *</label>
-                    <select className="form-control">
+                    <select name="ReviewType" className="form-control" required>
                       <option value="Outpatient">Outpatient</option>
                       <option value="Inward">Inward</option>
                     </select>
                   </div>
                   <div className="form-group">
                     <label className="form-label">Scheduled Date & Time *</label>
-                    <input type="datetime-local" className="form-control" />
+                    <input name="ScheduledDate" type="datetime-local" className="form-control" required />
                   </div>
                   <div className="form-group">
                     <label className="form-label">Assigned Doctor</label>
-                    <select className="form-control">
-                      <option>Dr. C. Wickramasinghe (Consultant JMO)</option>
-                      <option>Dr. N. Fernando (Senior Registrar)</option>
+                    <select name="DoctorID" className="form-control">
+                      <option value="1">Dr. C. Wickramasinghe (Consultant JMO)</option>
+                      <option value="2">Dr. N. Fernando (Senior Registrar)</option>
                     </select>
                   </div>
                   <div className="form-group" style={{ gridColumn: '1 / -1' }}>
                     <label className="form-label">Review Notes</label>
-                    <textarea className="form-control" rows="3" placeholder="Purpose of the review appointment..."></textarea>
+                    <textarea name="ReviewNotes" className="form-control" rows="3" placeholder="Purpose of the review appointment..."></textarea>
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', paddingTop: '1rem' }}>
@@ -403,7 +444,7 @@ const ReferralsAndReviews = () => {
                         <span style={{
                           padding: '2px 10px', borderRadius: '4px', fontSize: '0.82rem', fontWeight: '500',
                           background: review.reviewType === 'Inward' ? 'rgba(245, 158, 11, 0.1)' : 'rgba(14, 165, 233, 0.1)',
-                          color: review.reviewType === 'Inward' ? '#f59e0b' : '#0ea5e9'
+                          color: review.reviewType === 'Inward' ? '#f59e0b' : '#7dd3fc'
                         }}>
                           {review.reviewType}
                         </span>

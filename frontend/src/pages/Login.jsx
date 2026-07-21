@@ -6,29 +6,54 @@ const Login = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [focusedField, setFocusedField] = useState(null);
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    // Simulate a brief loading animation before navigating
-    setTimeout(() => {
-      navigate('/dashboard');
-    }, 800);
+    
+    const formData = new FormData(e.target);
+    const payload = Object.fromEntries(formData.entries());
+
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        // Save the full name or username to display in the UI
+        localStorage.setItem('currentUser', data.user.fullName);
+        localStorage.setItem('token', data.token);
+        
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 800);
+      } else {
+        const error = await res.json();
+        alert(error.error || 'Invalid credentials');
+        setIsSubmitting(false);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Network error');
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="login-page" style={{ 
         display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', 
-        background: 'radial-gradient(circle at center, #1e293b 0%, #0f172a 100%)', position: 'relative', overflow: 'hidden' 
+        background: 'radial-gradient(circle at center, #0a0a0a 0%, #000000 100%)', position: 'relative', overflow: 'hidden' 
     }}>
       
       {/* Animated Background Orbs */}
       <div className="bg-shape" style={{
         position: 'absolute', filter: 'blur(80px)', opacity: '0.4', zIndex: 0, borderRadius: '50%',
-        width: '500px', height: '500px', background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', top: '-150px', left: '-100px'
+        width: '500px', height: '500px', background: 'linear-gradient(135deg, #38bdf8, #8b5cf6)', top: '-150px', left: '-100px'
       }}></div>
       <div className="bg-shape" style={{
         position: 'absolute', filter: 'blur(80px)', opacity: '0.4', zIndex: 0, borderRadius: '50%',
-        width: '350px', height: '350px', background: 'linear-gradient(135deg, #0ea5e9, #06b6d4)', bottom: '-80px', right: '-50px'
+        width: '350px', height: '350px', background: 'linear-gradient(135deg, #7dd3fc, #06b6d4)', bottom: '-80px', right: '-50px'
       }}></div>
       <div className="bg-shape" style={{
         position: 'absolute', filter: 'blur(60px)', opacity: '0.2', zIndex: 0, borderRadius: '50%',
@@ -40,8 +65,8 @@ const Login = () => {
       <div style={{
         position: 'absolute', inset: 0, zIndex: 0,
         backgroundImage: `
-          linear-gradient(rgba(59, 130, 246, 0.03) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(59, 130, 246, 0.03) 1px, transparent 1px)
+          linear-gradient(rgba(56, 189, 248, 0.03) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(56, 189, 248, 0.03) 1px, transparent 1px)
         `,
         backgroundSize: '60px 60px',
         animation: 'float 6s ease-in-out infinite'
@@ -54,16 +79,16 @@ const Login = () => {
           {/* Animated Shield Icon */}
           <div style={{
             width: '64px', height: '64px', margin: '0 auto 1rem',
-            background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(14, 165, 233, 0.15))',
+            background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(14, 165, 233, 0.15))',
             borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            border: '1px solid rgba(59, 130, 246, 0.2)',
+            border: '1px solid rgba(56, 189, 248, 0.2)',
             animation: 'scaleIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards'
           }}>
-            <ion-icon name="shield-checkmark" style={{ fontSize: '2rem', color: '#3b82f6' }}></ion-icon>
+            <ion-icon name="shield-checkmark" style={{ fontSize: '2rem', color: '#38bdf8' }}></ion-icon>
           </div>
           <div className="login-logo" style={{ 
             fontSize: '2rem', fontWeight: '800', marginBottom: '0.5rem', 
-            background: 'linear-gradient(135deg, #3b82f6, #0ea5e9)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' 
+            background: 'linear-gradient(135deg, #38bdf8, #7dd3fc)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' 
           }}>Forensic DB</div>
           <div className="login-subtitle" style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>
             Secure access to the Department of Forensic Medicine
@@ -77,6 +102,7 @@ const Login = () => {
               <input 
                 type="text" 
                 id="username" 
+                name="username"
                 className="form-control" 
                 placeholder="Enter your credentials" 
                 required
@@ -85,12 +111,12 @@ const Login = () => {
                 style={{
                   paddingLeft: '2.75rem',
                   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  ...(focusedField === 'username' ? { borderColor: '#3b82f6', boxShadow: '0 0 0 3px rgba(59, 130, 246, 0.15), 0 0 20px rgba(59, 130, 246, 0.1)' } : {})
+                  ...(focusedField === 'username' ? { borderColor: '#38bdf8', boxShadow: '0 0 0 3px rgba(56, 189, 248, 0.15), 0 0 20px rgba(56, 189, 248, 0.1)' } : {})
                 }}
               />
               <ion-icon name="person-outline" style={{
                 position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)',
-                fontSize: '1.2rem', color: focusedField === 'username' ? '#3b82f6' : '#475569',
+                fontSize: '1.2rem', color: focusedField === 'username' ? '#38bdf8' : '#475569',
                 transition: 'color 0.3s'
               }}></ion-icon>
             </div>
@@ -110,12 +136,12 @@ const Login = () => {
                 style={{
                   paddingLeft: '2.75rem',
                   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  ...(focusedField === 'password' ? { borderColor: '#3b82f6', boxShadow: '0 0 0 3px rgba(59, 130, 246, 0.15), 0 0 20px rgba(59, 130, 246, 0.1)' } : {})
+                  ...(focusedField === 'password' ? { borderColor: '#38bdf8', boxShadow: '0 0 0 3px rgba(56, 189, 248, 0.15), 0 0 20px rgba(56, 189, 248, 0.1)' } : {})
                 }}
               />
               <ion-icon name="lock-closed-outline" style={{
                 position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)',
-                fontSize: '1.2rem', color: focusedField === 'password' ? '#3b82f6' : '#475569',
+                fontSize: '1.2rem', color: focusedField === 'password' ? '#38bdf8' : '#475569',
                 transition: 'color 0.3s'
               }}></ion-icon>
             </div>

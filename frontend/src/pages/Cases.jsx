@@ -1,8 +1,23 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const Cases = () => {
   const navigate = useNavigate();
+  const [cases, setCases] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/cases')
+      .then(res => res.json())
+      .then(data => {
+        setCases(data.data || []);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error(err);
+        setLoading(false);
+      });
+  }, []);
 
   return (
     <div className="page-content animate-fade-in">
@@ -10,13 +25,13 @@ const Cases = () => {
         
         <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
           <input type="text" placeholder="Search by Case No, Patient Name, or NIC..." 
-            style={{ flex: 1, padding: '0.5rem 1rem', background: 'rgba(15, 23, 42, 0.6)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', color: 'var(--text-main)' }} />
-          <select style={{ padding: '0.5rem 1rem', background: 'rgba(15, 23, 42, 0.6)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', color: 'var(--text-main)' }}>
+            style={{ flex: 1, padding: '0.5rem 1rem', background: 'rgba(10, 10, 10, 0.6)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', color: 'var(--text-main)' }} />
+          <select style={{ padding: '0.5rem 1rem', background: 'rgba(10, 10, 10, 0.6)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', color: 'var(--text-main)' }}>
             <option value="">All Types</option>
             <option value="clinical">Clinical</option>
             <option value="autopsy">Autopsy</option>
           </select>
-          <select style={{ padding: '0.5rem 1rem', background: 'rgba(15, 23, 42, 0.6)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', color: 'var(--text-main)' }}>
+          <select style={{ padding: '0.5rem 1rem', background: 'rgba(10, 10, 10, 0.6)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', color: 'var(--text-main)' }}>
             <option value="">All Statuses</option>
             <option value="open">Open</option>
             <option value="closed">Closed</option>
@@ -39,39 +54,29 @@ const Cases = () => {
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td style={{ fontFamily: 'monospace' }}>CAS-2026-089</td>
-                <td>Clinical (Trauma)</td>
-                <td>A.B. Perera</td>
-                <td>Jul 11, 2026</td>
-                <td>Dr. Wickramasinghe</td>
-                <td><span className="badge badge-warning">Under Investigation</span></td>
-                <td>
-                  <button className="btn btn-secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}>View</button>
-                </td>
-              </tr>
-              <tr>
-                <td style={{ fontFamily: 'monospace' }}>CAS-2026-088</td>
-                <td>Autopsy (Accidental)</td>
-                <td>M.N. Silva</td>
-                <td>Jul 10, 2026</td>
-                <td>Dr. Wickramasinghe</td>
-                <td><span className="badge badge-primary">PM In Progress</span></td>
-                <td>
-                  <button className="btn btn-secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}>View</button>
-                </td>
-              </tr>
-              <tr>
-                <td style={{ fontFamily: 'monospace' }}>CAS-2026-087</td>
-                <td>Clinical (Abuse)</td>
-                <td>Confidential</td>
-                <td>Jul 09, 2026</td>
-                <td>Dr. Silva</td>
-                <td><span className="badge badge-success">Closed</span></td>
-                <td>
-                  <button className="btn btn-secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}>View</button>
-                </td>
-              </tr>
+              {loading ? (
+                <tr><td colSpan="7" style={{textAlign: 'center'}}>Loading cases...</td></tr>
+              ) : cases.length === 0 ? (
+                <tr><td colSpan="7" style={{textAlign: 'center'}}>No cases found.</td></tr>
+              ) : (
+                cases.map((c) => (
+                  <tr key={c.CaseID}>
+                    <td style={{ fontFamily: 'monospace' }}>{c.CaseNumber}</td>
+                    <td>{c.CaseType} ({c.SubCategory})</td>
+                    <td>{c.PatientFirstName} {c.PatientLastName}</td>
+                    <td>{new Date(c.IncidentDate).toLocaleDateString()}</td>
+                    <td>Dr. {c.DoctorLastName || 'Unassigned'}</td>
+                    <td>
+                      <span className={`badge badge-${c.Status === 'Closed' ? 'success' : c.Status === 'Open' ? 'warning' : 'primary'}`}>
+                        {c.Status}
+                      </span>
+                    </td>
+                    <td>
+                      <button className="btn btn-secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}>View</button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════════════════════
 // Forensic Medicine Department Database System — Backend API Server
-// Member 3: Clinical Forensic Examinations & Medico-Legal Reports
+// Clinical Forensic Examinations & Medico-Legal Reports
 // ═══════════════════════════════════════════════════════════════════════════
 
 import express from 'express';
@@ -10,6 +10,13 @@ import dotenv from 'dotenv';
 // Route imports
 import mlefRoutes from './routes/mlefRoutes.js';
 import mlrRoutes from './routes/mlrRoutes.js';
+import authRoutes from './routes/authRoutes.js';
+import patientRoutes from './routes/patientRoutes.js';
+import caseRoutes from './routes/caseRoutes.js';
+import evidenceRoutes from './routes/evidenceRoutes.js';
+import autopsyRoutes from './routes/autopsyRoutes.js';
+import dashboardRoutes from './routes/dashboardRoutes.js';
+import reportRoutes from './routes/reportRoutes.js';
 import referralRoutes from './routes/referralRoutes.js';
 
 dotenv.config();
@@ -29,13 +36,20 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api/mlef', mlefRoutes);
 app.use('/api/mlr', mlrRoutes);
 app.use('/api/referrals', referralRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/patients', patientRoutes);
+app.use('/api/cases', caseRoutes);
+app.use('/api/evidence', evidenceRoutes);
+app.use('/api/autopsies', autopsyRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/reports', reportRoutes);
 
 // ─── Health Check ────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'OK',
     service: 'Forensic Medicine DB API',
-    module: 'Member 3 — Clinical Forensic & MLR',
+    module: 'Clinical Forensic & MLR',
     timestamp: new Date().toISOString()
   });
 });
@@ -57,7 +71,7 @@ app.use((err, req, res, next) => {
 // ─── Start Server ────────────────────────────────────────────────────────
 app.listen(PORT, () => {
   console.log(`\n🏥 Forensic Medicine DB API Server`);
-  console.log(`   Module: Clinical Forensic & MLR (Member 3)`);
+  console.log(`   Module: Clinical Forensic & MLR`);
   console.log(`   Running on: http://localhost:${PORT}`);
   console.log(`   Health check: http://localhost:${PORT}/api/health\n`);
 });

@@ -25,6 +25,28 @@ const AnimatedCounter = ({ target, duration = 1500 }) => {
 const Dashboard = () => {
   const navigate = useNavigate();
   const [greeting, setGreeting] = useState('');
+  const [stats, setStats] = useState({
+    totalCases: '0',
+    pendingMLRs: '0',
+    totalEvidence: '0',
+    pendingAutopsies: '0'
+  });
+
+  useEffect(() => {
+    fetch('/api/dashboard/stats')
+      .then(res => res.json())
+      .then(data => {
+        if(data.data) {
+          setStats({
+            totalCases: data.data.totalCases.toString(),
+            pendingMLRs: data.data.pendingMLRs.toString(),
+            totalEvidence: data.data.totalEvidence.toString(),
+            pendingAutopsies: data.data.pendingAutopsies.toString()
+          });
+        }
+      })
+      .catch(console.error);
+  }, []);
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -61,8 +83,8 @@ const Dashboard = () => {
             <ion-icon name="folder-open"></ion-icon>
           </div>
           <div className="stat-info">
-            <h3><AnimatedCounter target="124" /></h3>
-            <p>Active Cases</p>
+            <h3><AnimatedCounter target={stats.totalCases} /></h3>
+            <p>Total Cases</p>
           </div>
         </div>
         
@@ -71,28 +93,28 @@ const Dashboard = () => {
             <ion-icon name="document-text"></ion-icon>
           </div>
           <div className="stat-info">
-            <h3><AnimatedCounter target="12" duration={1000} /></h3>
-            <p>Draft MLEFs</p>
+            <h3><AnimatedCounter target={stats.pendingMLRs} duration={1000} /></h3>
+            <p>Draft MLRs</p>
           </div>
         </div>
 
         <div className="glass-panel stat-card">
           <div className="stat-icon danger">
-            <ion-icon name="calendar-clear"></ion-icon>
+            <ion-icon name="flask"></ion-icon>
           </div>
           <div className="stat-info">
-            <h3><AnimatedCounter target="3" duration={800} /></h3>
-            <p>Court Summons this Week</p>
+            <h3><AnimatedCounter target={stats.totalEvidence} duration={800} /></h3>
+            <p>Total Evidence</p>
           </div>
         </div>
 
         <div className="glass-panel stat-card">
           <div className="stat-icon success">
-            <ion-icon name="flask"></ion-icon>
+            <ion-icon name="body"></ion-icon>
           </div>
           <div className="stat-info">
-            <h3><AnimatedCounter target="28" duration={1200} /></h3>
-            <p>Pending Lab Tests</p>
+            <h3><AnimatedCounter target={stats.pendingAutopsies} duration={1200} /></h3>
+            <p>Pending Autopsies</p>
           </div>
         </div>
       </div>

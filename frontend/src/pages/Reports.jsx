@@ -1,6 +1,22 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 const Reports = () => {
+  const [reports, setReports] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/reports')
+      .then(res => res.json())
+      .then(data => {
+        setReports(data.data || []);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error(err);
+        setLoading(false);
+      });
+  }, []);
+
   return (
     <div className="page-content animate-fade-in">
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1.5rem' }}>
@@ -40,22 +56,22 @@ const Reports = () => {
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td style={{ fontFamily: 'monospace' }}>REP-2026-902</td>
-                <td><span className="badge badge-primary">MLR</span></td>
-                <td>CAS-2026-085</td>
-                <td>Dr. Wickramasinghe</td>
-                <td>Jul 10, 2026</td>
-                <td><button className="btn btn-secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}><ion-icon name="download-outline"></ion-icon> PDF</button></td>
-              </tr>
-              <tr>
-                <td style={{ fontFamily: 'monospace' }}>REP-2026-901</td>
-                <td><span className="badge badge-warning">PMR</span></td>
-                <td>CAS-2026-081</td>
-                <td>Dr. Silva</td>
-                <td>Jul 08, 2026</td>
-                <td><button className="btn btn-secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}><ion-icon name="download-outline"></ion-icon> PDF</button></td>
-              </tr>
+              {loading ? (
+                <tr><td colSpan="6" style={{textAlign: 'center'}}>Loading reports...</td></tr>
+              ) : reports.length === 0 ? (
+                <tr><td colSpan="6" style={{textAlign: 'center'}}>No generated reports found.</td></tr>
+              ) : (
+                reports.map(r => (
+                  <tr key={r.ReportID}>
+                    <td style={{ fontFamily: 'monospace' }}>{r.ReportID}</td>
+                    <td><span className="badge badge-primary">Report</span></td>
+                    <td>{r.CaseNumber}</td>
+                    <td>Dr. {r.DoctorLastName || 'Unassigned'}</td>
+                    <td>{new Date(r.IssuedDate).toLocaleDateString()}</td>
+                    <td><button className="btn btn-secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}><ion-icon name="download-outline"></ion-icon> PDF</button></td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

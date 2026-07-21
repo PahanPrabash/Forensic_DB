@@ -1,8 +1,21 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 
 const AppLayout = () => {
   const navigate = useNavigate();
+  const [currentUser, setCurrentUser] = useState('Dr. Wickramasinghe');
+
+  useEffect(() => {
+    const user = localStorage.getItem('currentUser');
+    if (user) {
+      setCurrentUser(user);
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('currentUser');
+    navigate('/login');
+  };
 
   return (
     <div className="app-container">
@@ -73,16 +86,18 @@ const AppLayout = () => {
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
             <div style={{ position: 'relative', cursor: 'pointer' }}>
-              <ion-icon name="notifications-outline" style={{ fontSize: '1.5rem', color: 'var(--text-muted)' }}></ion-icon>
-              <span style={{ position: 'absolute', top: '-2px', right: '-2px', background: 'var(--danger)', width: '10px', height: '10px', borderRadius: '50%', border: '2px solid var(--bg-dark)' }}></span>
+              <ion-icon name="notifications-outline" style={{ fontSize: '1.5rem' }}></ion-icon>
+              <span style={{ position: 'absolute', top: '-2px', right: '-2px', background: 'var(--danger)', width: '10px', height: '10px', borderRadius: '50%', border: '2px solid var(--primary)' }}></span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '0.5rem 1rem', background: 'var(--glass-bg)', border: 'var(--glass-border)', borderRadius: '20px', cursor: 'pointer' }}>
-              <div style={{ width: '30px', height: '30px', background: 'var(--primary)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600' }}>CW</div>
-              <span style={{ fontSize: '0.875rem', fontWeight: '500' }}>Dr. Wickramasinghe</span>
+            <div className="user-profile" style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '0.5rem 1rem', borderRadius: '20px', cursor: 'pointer' }}>
+              <div className="avatar" style={{ width: '30px', height: '30px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600' }}>
+                {currentUser.substring(0, 2).toUpperCase()}
+              </div>
+              <span style={{ fontSize: '0.875rem', fontWeight: '500' }}>{currentUser}</span>
             </div>
             <button 
-              onClick={() => navigate('/login')} 
-              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', cursor: 'pointer' }}
+              onClick={handleLogout} 
+              style={{ background: 'none', border: 'none', display: 'flex', alignItems: 'center', cursor: 'pointer' }}
             >
               <ion-icon name="log-out-outline" style={{ fontSize: '1.5rem' }}></ion-icon>
             </button>
