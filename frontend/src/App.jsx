@@ -8,6 +8,9 @@ import Cases from './pages/Cases';
 import PatientRegistration from './pages/PatientRegistration';
 import MlefForm from './pages/MlefForm';
 import AutopsyForm from './pages/AutopsyForm';
+import CauseOfDeathForm from './pages/CauseOfDeathForm';
+import CourtSummons from './pages/CourtSummons';
+import AuditAndNotifications from './pages/AuditAndNotifications';
 import Evidence from './pages/Evidence';
 import Reports from './pages/Reports';
 import Signup from './pages/Signup';
@@ -28,6 +31,9 @@ function App() {
           <Route path="/register-patient" element={<PatientRegistration />} />
           <Route path="/clinical-mlef" element={<MlefForm />} />
           <Route path="/autopsy-pmr" element={<AutopsyForm />} />
+          <Route path="/cause-of-death" element={<CauseOfDeathForm />} />
+          <Route path="/court-summons" element={<CourtSummons />} />
+          <Route path="/audit-notifications" element={<AuditAndNotifications />} />
           <Route path="/evidence" element={<Evidence />} />
           <Route path="/reports" element={<Reports />} />
         </Route>
