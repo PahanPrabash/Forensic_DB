@@ -35,8 +35,33 @@ const AppLayout = () => {
             </NavLink>
           </div>
           <div className="nav-item">
+            <NavLink to="/mlr-report" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
+              <ion-icon name="reader-outline"></ion-icon> MLR Reports
+            </NavLink>
+          </div>
+          <div className="nav-item">
+            <NavLink to="/referrals" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
+              <ion-icon name="git-branch-outline"></ion-icon> Referrals & Reviews
+            </NavLink>
+          </div>
+          <div className="nav-item">
             <NavLink to="/autopsy-pmr" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
               <ion-icon name="flask-outline"></ion-icon> Autopsy (PMR)
+            </NavLink>
+          </div>
+          <div className="nav-item">
+            <NavLink to="/cause-of-death" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
+              <ion-icon name="document-outline"></ion-icon> Cause of Death
+            </NavLink>
+          </div>
+          <div className="nav-item">
+            <NavLink to="/court-summons" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
+              <ion-icon name="calendar-outline"></ion-icon> Court Summons
+            </NavLink>
+          </div>
+          <div className="nav-item">
+            <NavLink to="/audit-notifications" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
+              <ion-icon name="notifications-circle-outline"></ion-icon> Audit & Alerts
             </NavLink>
           </div>
           <div className="nav-item">
