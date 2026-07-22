@@ -1,8 +1,12 @@
-const express = require('express');
+import express from 'express';
+import { getAuditLogs, getNotifications } from '../controllers/auditController.js';
+import { protect, checkModulePermission } from '../middleware/authMiddleware.js';
+
 const router = express.Router();
-const auditController = require('../controllers/auditController');
 
-router.get('/audit-logs', auditController.getAuditLogs);
-router.get('/notifications', auditController.getNotifications);
+router.use(protect);
 
-module.exports = router;
+router.get('/audit-logs', checkModulePermission('UserAdmin', 'read'), getAuditLogs);
+router.get('/notifications', checkModulePermission('UserAdmin', 'read'), getNotifications);
+
+export default router;

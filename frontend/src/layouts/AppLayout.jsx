@@ -32,7 +32,7 @@ const AppLayout = () => {
     
     // System Administrator (Role ID 1)
     if (roleId === 1) {
-      return ['Dashboard', 'Staff', 'Profile'].includes(moduleName);
+      return ['Dashboard', 'Staff', 'Audit', 'Profile'].includes(moduleName);
     }
     // Examining Doctor (JMO) (Role ID 2)
     if (roleId === 2) {
@@ -137,16 +137,25 @@ const AppLayout = () => {
             </div>
           )}
           
-          {showLink('Staff') && (
+          {(showLink('Staff') || showLink('Audit')) && (
             <>
               <div style={{ margin: '1.5rem 0 0.5rem', fontSize: '0.75rem', textTransform: 'uppercase', color: '#475569', fontWeight: '700', letterSpacing: '0.05em', paddingLeft: '1rem' }}>
                 Administration
               </div>
-              <div className="nav-item">
-                <NavLink to="/staff" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
-                  <ion-icon name="people-outline"></ion-icon> Staff Directory
-                </NavLink>
-              </div>
+              {showLink('Staff') && (
+                <div className="nav-item">
+                  <NavLink to="/staff" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
+                    <ion-icon name="people-outline"></ion-icon> Staff Directory
+                  </NavLink>
+                </div>
+              )}
+              {showLink('Audit') && (
+                <div className="nav-item">
+                  <NavLink to="/audit-notifications" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
+                    <ion-icon name="notifications-circle-outline"></ion-icon> Audit & Alerts
+                  </NavLink>
+                </div>
+              )}
             </>
           )}
 
