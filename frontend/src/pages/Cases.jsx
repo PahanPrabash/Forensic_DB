@@ -19,6 +19,11 @@ const Cases = () => {
       });
   }, []);
 
+  const handleFilter = () => {
+    // Filter functionality placeholder — filters can be implemented here
+    console.log('Filter applied');
+  };
+
   return (
     <div className="page-content animate-fade-in">
       <div className="glass-panel" style={{ padding: '1.5rem' }}>

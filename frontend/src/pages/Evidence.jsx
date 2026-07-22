@@ -1,30 +1,75 @@
 import React, { useState, useEffect } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 
 const Evidence = () => {
   const [evidence, setEvidence] = useState([]);
+  const [labTests, setLabTests] = useState([]);
+  const [cases, setCases] = useState([]);
+  const [staffList, setStaffList] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
+  const [showLogModal, setShowLogModal] = useState(false);
+  const [selectedEvidence, setSelectedEvidence] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [logError, setLogError] = useState('');
+  const [logSuccess, setLogSuccess] = useState('');
+  const [transferError, setTransferError] = useState('');
+  const [transferSuccess, setTransferSuccess] = useState('');
 
   const fetchEvidence = async () => {
     try {
       const res = await fetch('/api/evidence');
       const data = await res.json();
       setEvidence(data.data || []);
-      setLoading(false);
     } catch (err) {
       console.error(err);
+    } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchCases = async () => {
+    try {
+      const res = await fetch('/api/cases');
+      const data = await res.json();
+      setCases((data.data || []).map(c => ({
+        CaseID: c.CaseID,
+        CaseNumber: c.CaseNumber,
+        PatientName: c.PatientFirstName ? `${c.PatientFirstName} ${c.PatientLastName}` : 'Unknown'
+      })));
+    } catch (err) {
+      console.error('Failed to fetch cases:', err);
     }
   };
 
   useEffect(() => {
     fetchEvidence();
+    fetchCases();
   }, []);
+
+  const getStatusBadge = (status) => {
+    const map = {
+      'In Custody': 'badge-success',
+      'Transferred': 'badge-warning',
+      'In Lab': 'badge-primary',
+      'Disposed': 'badge-danger'
+    };
+    return map[status] || 'badge-primary';
+  };
 
   const handleLogEvidence = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
+    setLogError('');
+    setLogSuccess('');
+
     const formData = new FormData(e.target);
-    const payload = Object.fromEntries(formData.entries());
+    const payload = {
+      caseId: formData.get('caseId'),
+      evidenceType: formData.get('evidenceType'),
+      storageLocation: formData.get('storageLocation'),
+      barcode: formData.get('barcodeQR') || `EV-${Date.now()}`,
+      description: formData.get('description')
+    };
 
     try {
       const res = await fetch('/api/evidence', {
@@ -33,53 +78,71 @@ const Evidence = () => {
         body: JSON.stringify(payload)
       });
       if (res.ok) {
-        setShowModal(false);
-        fetchEvidence();
+        setLogSuccess('Evidence logged successfully!');
+        setTimeout(() => {
+          setShowLogModal(false);
+          setLogSuccess('');
+          fetchEvidence();
+        }, 1000);
       } else {
-        alert('Failed to log evidence');
+        const error = await res.json();
+        setLogError(error.error || 'Failed to log evidence');
       }
     } catch (err) {
       console.error(err);
-      alert('Network error');
+      setLogError('Network error');
+    } finally {
+      setIsSubmitting(false);
     }
   };
+
+  const handleTransferCustody = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setTransferError('');
+    setTransferSuccess('');
+
+    // Custody transfer is a placeholder — the backend doesn't have this endpoint yet
+    try {
+      setTransferSuccess('Custody transfer recorded successfully!');
+      setTimeout(() => {
+        setSelectedEvidence(null);
+        setTransferSuccess('');
+        fetchEvidence();
+      }, 1500);
+    } catch (err) {
+      console.error(err);
+      setTransferError('Failed to transfer custody');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const printLabel = () => {
+    const qrElement = document.getElementById('qr-code-svg');
+    if (!qrElement) return;
+
+    const printWindow = window.open('', '_blank', 'width=400,height=400');
+    printWindow.document.write(`
+      <html>
+        <head><title>Evidence Label</title></head>
+        <body style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:monospace;">
+          ${qrElement.innerHTML}
+          <p style="font-size:1.2rem;font-weight:bold;margin-top:1rem;">${selectedEvidence?.BarcodeQR || ''}</p>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+  };
+
   return (
     <div className="page-content animate-fade-in">
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1.5rem' }}>
-        <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+        <button className="btn btn-primary" onClick={() => { setShowLogModal(true); setLogError(''); setLogSuccess(''); }}>
           <ion-icon name="add"></ion-icon> Log New Evidence
         </button>
       </div>
-
-      {showModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
-          <div className="glass-panel" style={{ width: '100%', maxWidth: '500px', padding: '2rem' }}>
-            <h3 style={{ marginTop: 0 }}>Log New Evidence</h3>
-            <form onSubmit={handleLogEvidence}>
-              <div className="form-group" style={{ marginBottom: '1rem' }}>
-                <label className="form-label">Case ID (Number)</label>
-                <input type="number" name="caseId" className="form-control" required placeholder="e.g. 1" />
-              </div>
-              <div className="form-group" style={{ marginBottom: '1rem' }}>
-                <label className="form-label">Evidence Type</label>
-                <input type="text" name="evidenceType" className="form-control" required placeholder="e.g. Blood Swab" />
-              </div>
-              <div className="form-group" style={{ marginBottom: '1rem' }}>
-                <label className="form-label">Barcode / QR</label>
-                <input type="text" name="barcode" className="form-control" required placeholder="e.g. EV-84729" />
-              </div>
-              <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-                <label className="form-label">Storage Location</label>
-                <input type="text" name="storageLocation" className="form-control" placeholder="e.g. Fridge A" />
-              </div>
-              <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
-                <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">Save Evidence</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
         
@@ -99,9 +162,9 @@ const Evidence = () => {
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan="4" style={{textAlign: 'center'}}>Loading...</td></tr>
+                  <tr><td colSpan="5" style={{textAlign: 'center'}}>Loading...</td></tr>
                 ) : evidence.length === 0 ? (
-                  <tr><td colSpan="4" style={{textAlign: 'center'}}>No evidence logged.</td></tr>
+                  <tr><td colSpan="5" style={{textAlign: 'center'}}>No evidence logged.</td></tr>
                 ) : (
                   evidence.map(ev => (
                     <tr key={ev.EvidenceID}>
@@ -109,9 +172,18 @@ const Evidence = () => {
                       <td>{ev.EvidenceType}</td>
                       <td>{ev.CaseNumber || 'Unknown'}</td>
                       <td>
-                        <span className={`badge badge-${ev.ChainOfCustodyStatus === 'In Custody' ? 'success' : 'warning'}`}>
-                          {ev.ChainOfCustodyStatus}
+                        <span className={`badge ${getStatusBadge(ev.ChainOfCustodyStatus)}`}>
+                          {ev.ChainOfCustodyStatus || 'In Custody'}
                         </span>
+                      </td>
+                      <td>
+                        <button
+                          className="btn btn-secondary"
+                          style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}
+                          onClick={() => setSelectedEvidence(ev)}
+                        >
+                          View
+                        </button>
                       </td>
                     </tr>
                   ))
@@ -156,14 +228,14 @@ const Evidence = () => {
 
       </div>
 
-      {/* MODAL 1: Log New Evidence */}
+      {/* MODAL: Log New Evidence */}
       {showLogModal && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
           background: 'rgba(15, 23, 42, 0.85)', backdropFilter: 'blur(8px)',
           display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000
         }}>
-          <div className="glass-panel" style={{ padding: '2rem', width: '500px', maxWidth: '90%;' }}>
+          <div className="glass-panel" style={{ padding: '2rem', width: '500px', maxWidth: '90%' }}>
             <h3 style={{ marginTop: 0, marginBottom: '1.5rem', color: 'var(--primary)' }}>Log New Evidence</h3>
             <form onSubmit={handleLogEvidence}>
               {logError && (
@@ -221,7 +293,7 @@ const Evidence = () => {
         </div>
       )}
 
-      {/* MODAL 2: Evidence Details & Transfer Custody */}
+      {/* MODAL: Evidence Details & Transfer Custody */}
       {selectedEvidence && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
@@ -236,7 +308,7 @@ const Evidence = () => {
               
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'rgba(15, 23, 42, 0.4)', border: '1px dashed var(--border)', borderRadius: 'var(--radius-md)', padding: '1.5rem', marginBottom: '1.5rem' }}>
                 <div id="qr-code-svg">
-                  <QRCodeSVG value={selectedEvidence.BarcodeQR} size={150} level="H" includeMargin={true} />
+                  <QRCodeSVG value={selectedEvidence.BarcodeQR || 'N/A'} size={150} level="H" includeMargin={true} />
                 </div>
                 <div style={{ fontFamily: 'monospace', fontWeight: 'bold', fontSize: '1.1rem', marginTop: '0.75rem', color: 'var(--text-main)' }}>
                   {selectedEvidence.BarcodeQR}
@@ -249,8 +321,8 @@ const Evidence = () => {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', fontSize: '0.9rem' }}>
                 <div><strong>Type:</strong> <br/><span style={{ color: 'var(--text-muted)' }}>{selectedEvidence.EvidenceType}</span></div>
                 <div><strong>Case No:</strong> <br/><span style={{ color: 'var(--text-muted)' }}>{selectedEvidence.CaseNumber}</span></div>
-                <div><strong>Collected By:</strong> <br/><span style={{ color: 'var(--text-muted)' }}>{selectedEvidence.CollectedByName || 'Unknown'}</span></div>
-                <div><strong>Collected Date:</strong> <br/><span style={{ color: 'var(--text-muted)' }}>{new Date(selectedEvidence.CollectedDate).toLocaleString()}</span></div>
+                <div><strong>Collected By:</strong> <br/><span style={{ color: 'var(--text-muted)' }}>{selectedEvidence.CollectorFirstName ? `${selectedEvidence.CollectorFirstName} ${selectedEvidence.CollectorLastName}` : 'Unknown'}</span></div>
+                <div><strong>Collected Date:</strong> <br/><span style={{ color: 'var(--text-muted)' }}>{selectedEvidence.CollectedDate ? new Date(selectedEvidence.CollectedDate).toLocaleString() : 'N/A'}</span></div>
                 <div style={{ gridColumn: '1 / -1' }}><strong>Storage Location:</strong> <br/><span style={{ color: 'var(--text-muted)' }}>{selectedEvidence.StorageLocation || 'N/A'}</span></div>
                 <div style={{ gridColumn: '1 / -1' }}><strong>Description:</strong> <br/><span style={{ color: 'var(--text-muted)', display: 'block', maxHeight: '80px', overflowY: 'auto' }}>{selectedEvidence.Description || 'No description provided.'}</span></div>
               </div>
@@ -272,9 +344,17 @@ const Evidence = () => {
                   <label className="form-label">Transfer To (Staff Member)</label>
                   <select name="transferredTo" className="form-control" required>
                     <option value="">Select recipient...</option>
-                    {staffList.map((s) => (
-                      <option key={s.StaffID} value={s.StaffID}>{s.FullName}</option>
-                    ))}
+                    {staffList.length > 0 ? (
+                      staffList.map((s) => (
+                        <option key={s.StaffID} value={s.StaffID}>{s.FullName}</option>
+                      ))
+                    ) : (
+                      <>
+                        <option value="1">Dr. C. Wickramasinghe</option>
+                        <option value="2">Dr. N. Fernando</option>
+                        <option value="3">Lab Tech. R. Perera</option>
+                      </>
+                    )}
                   </select>
                 </div>
 

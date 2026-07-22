@@ -7,8 +7,6 @@ const PatientRegistration = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
