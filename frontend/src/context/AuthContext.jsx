@@ -29,6 +29,31 @@ export const AuthProvider = ({ children }) => {
     loadUser();
   }, [token]);
 
+  useEffect(() => {
+    if (!token) return;
+
+    let timeoutId;
+
+    const resetTimer = () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      // Log out after 15 minutes of user inactivity (900000ms)
+      timeoutId = setTimeout(() => {
+        alert('Your session has expired due to 15 minutes of inactivity. Please log in again.');
+        logout();
+      }, 900000);
+    };
+
+    const events = ['mousemove', 'keypress', 'click', 'scroll'];
+    events.forEach(event => window.addEventListener(event, resetTimer));
+
+    resetTimer();
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      events.forEach(event => window.removeEventListener(event, resetTimer));
+    };
+  }, [token]);
+
   const login = async (username, password) => {
     try {
       const res = await authAPI.login(username, password);

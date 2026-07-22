@@ -14,6 +14,7 @@ const generateToken = (id) => {
 // @access  Public
 export const login = async (req, res) => {
   const { username, password } = req.body;
+  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
 
   if (!username || !password) {
     return res.status(400).json({ success: false, message: 'Please provide username and password' });
@@ -31,22 +32,40 @@ export const login = async (req, res) => {
     );
 
     if (users.length === 0) {
+      await pool.query(
+        "INSERT INTO AuditLog (Action, TableAffected, RecordID, NewValue, IPAddress) VALUES ('FAILED_LOGIN', 'User', NULL, ?, ?)",
+        [JSON.stringify({ AttemptedUsername: username, Reason: 'Username not found' }), ip]
+      );
       return res.status(401).json({ success: false, message: 'Invalid username or password' });
     }
 
     const user = users[0];
 
     if (!user.IsActive) {
+      await pool.query(
+        "INSERT INTO AuditLog (UserID, Action, TableAffected, RecordID, NewValue, IPAddress) VALUES (?, 'FAILED_LOGIN', 'User', ?, ?, ?)",
+        [user.UserID, user.UserID, JSON.stringify({ AttemptedUsername: username, Reason: 'Account is deactivated' }), ip]
+      );
       return res.status(403).json({ success: false, message: 'Account is deactivated. Contact System Admin.' });
     }
 
     const isMatch = await bcrypt.compare(password, user.PasswordHash);
     if (!isMatch) {
+      await pool.query(
+        "INSERT INTO AuditLog (UserID, Action, TableAffected, RecordID, NewValue, IPAddress) VALUES (?, 'FAILED_LOGIN', 'User', ?, ?, ?)",
+        [user.UserID, user.UserID, JSON.stringify({ AttemptedUsername: username, Reason: 'Incorrect password' }), ip]
+      );
       return res.status(401).json({ success: false, message: 'Invalid username or password' });
     }
 
     // Update last login timestamp
     await pool.query('UPDATE User SET LastLogin = NOW() WHERE UserID = ?', [user.UserID]);
+
+    // Audit Success Login
+    await pool.query(
+      "INSERT INTO AuditLog (UserID, Action, TableAffected, RecordID, NewValue, IPAddress) VALUES (?, 'LOGIN', 'User', ?, 'Session authenticated successfully', ?)",
+      [user.UserID, user.UserID, ip]
+    );
 
     const token = generateToken(user.UserID);
 
