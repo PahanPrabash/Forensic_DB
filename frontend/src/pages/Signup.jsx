@@ -208,7 +208,15 @@ const Signup = () => {
         </form>
 
         <div style={{ textAlign: 'center', marginTop: '1.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-          Already have an account? <Link to="/signup" style={{ color: 'var(--primary)', fontWeight: '500' }} onClick={() => navigate('/login')}>Login here</Link>
+          Already have an account? <Link to="/login" style={{ color: 'var(--primary)', fontWeight: '600' }}>Login here</Link>
+        </div>
+
+        {/* Back to Home Link */}
+        <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+          <Link to="/" style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', transition: 'color 0.2s' }}>
+            <ion-icon name="arrow-back-outline"></ion-icon>
+            Back to Home
+          </Link>
         </div>
       </div>
     </div>
