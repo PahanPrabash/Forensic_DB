@@ -33,7 +33,7 @@ const seedDatabase = async () => {
     console.log('➡️ Seeding Role Permissions...');
     const modules = ['Patient', 'Case', 'Clinical', 'Autopsy', 'Evidence', 'Court', 'Staff', 'UserAdmin'];
     
-    // System Admin gets full permissions
+    // Role 1: System Admin (Full rights)
     for (const m of modules) {
       await pool.query(
         `INSERT INTO RolePermission (RoleID, Module, CanCreate, CanRead, CanUpdate, CanDelete)
@@ -43,19 +43,57 @@ const seedDatabase = async () => {
       );
     }
 
-    // JMO Doctor permissions
-    const jmoModules = [
+    // Role 2: JMO Doctor permissions
+    const jmoPermissions = [
+      { m: 'Patient', c: true, r: true, u: true, d: false },
+      { m: 'Case', c: true, r: true, u: true, d: false },
       { m: 'Clinical', c: true, r: true, u: true, d: false },
       { m: 'Autopsy', c: true, r: true, u: true, d: false },
-      { m: 'Case', c: false, r: true, u: true, d: false },
-      { m: 'Evidence', c: true, r: true, u: false, d: false }
+      { m: 'Evidence', c: true, r: true, u: true, d: false },
+      { m: 'Court', c: true, r: true, u: true, d: false }
     ];
-    for (const j of jmoModules) {
+    for (const p of jmoPermissions) {
       await pool.query(
         `INSERT INTO RolePermission (RoleID, Module, CanCreate, CanRead, CanUpdate, CanDelete)
          VALUES (2, ?, ?, ?, ?, ?)
          ON DUPLICATE KEY UPDATE CanCreate=VALUES(CanCreate), CanRead=VALUES(CanRead), CanUpdate=VALUES(CanUpdate), CanDelete=VALUES(CanDelete)`,
-        [j.m, j.c, j.r, j.u, j.d]
+        [p.m, p.c, p.r, p.u, p.d]
+      );
+    }
+
+    // Role 3: Registrar Clerk permissions
+    const clerkPermissions = [
+      { m: 'Patient', c: true, r: true, u: true, d: false },
+      { m: 'Case', c: true, r: true, u: true, d: false },
+      { m: 'Clinical', c: false, r: true, u: false, d: false },
+      { m: 'Autopsy', c: false, r: true, u: false, d: false },
+      { m: 'Evidence', c: false, r: true, u: false, d: false },
+      { m: 'Court', c: true, r: true, u: true, d: false }
+    ];
+    for (const p of clerkPermissions) {
+      await pool.query(
+        `INSERT INTO RolePermission (RoleID, Module, CanCreate, CanRead, CanUpdate, CanDelete)
+         VALUES (3, ?, ?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE CanCreate=VALUES(CanCreate), CanRead=VALUES(CanRead), CanUpdate=VALUES(CanUpdate), CanDelete=VALUES(CanDelete)`,
+        [p.m, p.c, p.r, p.u, p.d]
+      );
+    }
+
+    // Role 4: Laboratory Staff permissions
+    const labPermissions = [
+      { m: 'Patient', c: false, r: true, u: false, d: false },
+      { m: 'Case', c: false, r: true, u: false, d: false },
+      { m: 'Clinical', c: false, r: false, u: false, d: false },
+      { m: 'Autopsy', c: false, r: false, u: false, d: false },
+      { m: 'Evidence', c: true, r: true, u: true, d: false },
+      { m: 'Court', c: false, r: false, u: false, d: false }
+    ];
+    for (const p of labPermissions) {
+      await pool.query(
+        `INSERT INTO RolePermission (RoleID, Module, CanCreate, CanRead, CanUpdate, CanDelete)
+         VALUES (4, ?, ?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE CanCreate=VALUES(CanCreate), CanRead=VALUES(CanRead), CanUpdate=VALUES(CanUpdate), CanDelete=VALUES(CanDelete)`,
+        [p.m, p.c, p.r, p.u, p.d]
       );
     }
 
@@ -79,32 +117,9 @@ const seedDatabase = async () => {
       [adminPasswordHash]
     );
 
-    // 5. Seed Sample JMO Doctor Staff Record
-    console.log('➡️ Seeding Sample JMO Doctor Record...');
-    await pool.query(
-      `INSERT INTO Staff (StaffID, FirstName, LastName, Role, Department, Phone, Email, HireDate, IsActive)
-       VALUES (2, 'Chathula', 'Wickramasinghe', 'JMO', 'Forensic Medicine', '077-1234567', 'chathula_wick@yahoo.com', '2024-01-01', TRUE)
-       ON DUPLICATE KEY UPDATE FirstName=VALUES(FirstName), LastName=VALUES(LastName)`
-    );
-
-    await pool.query(
-      `INSERT INTO Doctor (DoctorID, StaffID, MedicalRegNo, Specialization, Designation, Qualifications)
-       VALUES (1, 2, 'SLMC-45210', 'Forensic Medicine', 'Act. Consultant JMO / Lecturer', 'MBBS(Perad), MD(Col), DLM(Col)')
-       ON DUPLICATE KEY UPDATE MedicalRegNo = VALUES(MedicalRegNo)`
-    );
-
-    const doctorPasswordHash = await bcrypt.hash('jmo123', salt);
-    await pool.query(
-      `INSERT INTO User (UserID, Username, PasswordHash, StaffID, RoleID, IsActive)
-       VALUES (2, 'drchathula', ?, 2, 2, TRUE)
-       ON DUPLICATE KEY UPDATE PasswordHash = VALUES(PasswordHash)`,
-      [doctorPasswordHash]
-    );
-
     console.log('✅ Database seeding complete!');
-    console.log('📌 Test Accounts Created:');
-    console.log('   1. Username: admin      | Password: admin123  (Role: System Administrator)');
-    console.log('   2. Username: drchathula | Password: jmo123     (Role: Examining Doctor JMO)');
+    console.log('📌 Default System Administrator profile is active:');
+    console.log('   Username: admin | Password: admin123');
 
     process.exit(0);
   } catch (error) {

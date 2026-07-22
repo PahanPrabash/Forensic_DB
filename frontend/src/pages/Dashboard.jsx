@@ -68,7 +68,7 @@ const Dashboard = () => {
     fetchDashboardData();
   }, []);
 
-  const displayName = user ? `${user.firstName || user.username}` : 'Doctor';
+  const displayName = user ? `${user.FirstName || user.firstName || user.Username || user.username || 'User'}` : 'User';
 
   return (
     <div className="page-content">

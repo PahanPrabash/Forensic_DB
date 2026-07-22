@@ -107,7 +107,7 @@ const Profile = () => {
               <b>Username:</b> <code style={{ color: '#3b82f6', fontWeight: 'bold' }}>{formData.username}</code>
             </p>
             <p style={{ margin: '0.5rem 0', color: 'var(--text-muted)' }}>
-              <b>Staff ID:</b> {user?.StaffID || 'N/A'}
+              <b>Staff ID:</b> {user?.StaffID || user?.staffId ? `STF-${String(user.StaffID || user.staffId).padStart(3, '0')}` : 'N/A'}
             </p>
             <p style={{ margin: '0.5rem 0', color: 'var(--text-muted)' }}>
               <b>Department:</b> {formData.department}

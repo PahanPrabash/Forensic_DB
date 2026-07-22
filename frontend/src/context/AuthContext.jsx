@@ -14,7 +14,7 @@ export const AuthProvider = ({ children }) => {
         try {
           const res = await authAPI.getMe();
           if (res.success) {
-            setUser(res.user);
+            setUser(res.user || res.data);
           } else {
             logout();
           }

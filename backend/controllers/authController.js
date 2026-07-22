@@ -75,27 +75,89 @@ export const login = async (req, res) => {
 // @route   POST /api/auth/register
 // @access  Public (or Admin)
 export const register = async (req, res) => {
-  const { username, password, roleId, staffId } = req.body;
+  const { username, password, roleId, staffId, email } = req.body;
 
   if (!username || !password || !roleId) {
     return res.status(400).json({ success: false, message: 'Username, password, and roleId are required' });
   }
 
   try {
-    // Check if username already exists
+    // 1. Check if username already exists
     const [existing] = await pool.query('SELECT UserID FROM User WHERE Username = ?', [username]);
     if (existing.length > 0) {
       return res.status(400).json({ success: false, message: 'Username already taken' });
     }
 
-    // Hash password
+    let finalStaffId = null;
+
+    // 2. Double verification for non-admin accounts
+    if (parseInt(roleId) !== 1) {
+      if (!staffId || !email) {
+        return res.status(400).json({ success: false, message: 'Staff ID and registered Email Address are required for this role.' });
+      }
+
+      // Parse formatted Staff ID (e.g. "STF-002" or "stf-002" or "2" into integer 2)
+      let parsedStaffId;
+      const cleanStaffId = String(staffId).trim().toUpperCase();
+      if (cleanStaffId.startsWith('STF-')) {
+        parsedStaffId = parseInt(cleanStaffId.replace('STF-', ''), 10);
+      } else {
+        parsedStaffId = parseInt(cleanStaffId, 10);
+      }
+
+      if (isNaN(parsedStaffId)) {
+        return res.status(400).json({ success: false, message: 'Invalid Staff ID format. Please use the format STF-001.' });
+      }
+
+      // Fetch staff details by ID
+      const [staffRows] = await pool.query(
+        'SELECT StaffID, Role, Email, IsActive FROM Staff WHERE StaffID = ?',
+        [parsedStaffId]
+      );
+
+      if (staffRows.length === 0) {
+        return res.status(400).json({ success: false, message: `Staff ID STF-${String(parsedStaffId).padStart(3, '0')} not found in the directory.` });
+      }
+
+      const staff = staffRows[0];
+
+      if (!staff.IsActive) {
+        return res.status(400).json({ success: false, message: 'Staff profile is currently marked as Inactive. Contact Admin.' });
+      }
+
+      // Verify email combination
+      if (staff.Email.trim().toLowerCase() !== email.trim().toLowerCase()) {
+        return res.status(400).json({ success: false, message: 'Registered Email Address does not match the provided Staff ID.' });
+      }
+
+      // Verify role mapping compatibility
+      // RoleID 2 -> JMO, RoleID 3 -> Clerk, RoleID 4 -> Lab Technician
+      const selectedRoleId = parseInt(roleId);
+      const isJmoMatch = (selectedRoleId === 2 && staff.Role === 'JMO');
+      const isClerkMatch = (selectedRoleId === 3 && staff.Role === 'Clerk');
+      const isLabMatch = (selectedRoleId === 4 && staff.Role === 'Lab Technician');
+
+      if (!isJmoMatch && !isClerkMatch && !isLabMatch) {
+        return res.status(400).json({ success: false, message: `Selected role does not match the registered staff directory profile (${staff.Role}).` });
+      }
+
+      // Verify if a login account is already linked to this StaffID
+      const [existingUser] = await pool.query('SELECT UserID FROM User WHERE StaffID = ?', [staff.StaffID]);
+      if (existingUser.length > 0) {
+        return res.status(400).json({ success: false, message: 'A user login account is already registered for this Staff ID.' });
+      }
+
+      finalStaffId = staff.StaffID;
+    }
+
+    // 3. Hash password
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
 
-    // Insert user
+    // 4. Insert user
     const [result] = await pool.query(
       'INSERT INTO User (Username, PasswordHash, StaffID, RoleID, IsActive) VALUES (?, ?, ?, ?, TRUE)',
-      [username, passwordHash, staffId || null, roleId]
+      [username, passwordHash, finalStaffId, roleId]
     );
 
     const token = generateToken(result.insertId);
@@ -118,105 +180,64 @@ export const register = async (req, res) => {
 export const getMe = async (req, res) => {
   try {
     const [users] = await pool.query(
-      `SELECT u.UserID, u.Username, u.StaffID, u.RoleID, u.IsActive, u.LastLogin, u.CreatedAt, r.RoleName,
-              s.FirstName, s.LastName, s.Email, s.Phone, s.Department
+      `SELECT u.UserID, u.Username, u.StaffID, u.RoleID, r.RoleName,
+              s.FirstName, s.LastName, s.Email, s.Phone, d.MedicalRegNo, d.Specialization, d.Designation, d.Qualifications
        FROM User u
        JOIN Role r ON u.RoleID = r.RoleID
        LEFT JOIN Staff s ON u.StaffID = s.StaffID
+       LEFT JOIN Doctor d ON s.StaffID = d.StaffID
        WHERE u.UserID = ?`,
       [req.user.UserID]
     );
 
     if (users.length === 0) {
-      return res.status(404).json({ success: false, message: 'User profile not found' });
+      return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    res.json({
-      success: true,
-      user: users[0]
-    });
+    res.json({ success: true, user: users[0], data: users[0] });
   } catch (error) {
-    console.error('GetMe Error:', error);
-    res.status(500).json({ success: false, message: 'Server error fetching user profile' });
+    console.error('getMe Error:', error);
+    res.status(500).json({ success: false, message: 'Server error retrieving profile' });
   }
 };
 
-// @desc    Update profile details, username & password
+// @desc    Update user profile & password settings
 // @route   PUT /api/auth/profile
 // @access  Private
 export const updateProfile = async (req, res) => {
-  const { username, firstName, lastName, email, phone, department, currentPassword, newPassword } = req.body;
+  const { password, phone, email } = req.body;
   const userId = req.user.UserID;
   const staffId = req.user.StaffID;
 
+  const connection = await pool.getConnection();
   try {
-    // 1. Update Username if provided and unique
-    if (username && username !== req.user.Username) {
-      const [existing] = await pool.query('SELECT UserID FROM User WHERE Username = ? AND UserID != ?', [username, userId]);
-      if (existing.length > 0) {
-        return res.status(400).json({ success: false, message: 'Username is already in use by another user' });
-      }
-      await pool.query('UPDATE User SET Username = ? WHERE UserID = ?', [username, userId]);
-    }
+    await connection.beginTransaction();
 
-    // 2. Update Staff details if StaffID exists
+    // 1. Update contact details in Staff profile if linked
     if (staffId) {
-      await pool.query(
-        `UPDATE Staff 
-         SET FirstName = COALESCE(?, FirstName),
-             LastName = COALESCE(?, LastName),
-             Email = COALESCE(?, Email),
-             Phone = COALESCE(?, Phone),
-             Department = COALESCE(?, Department)
-         WHERE StaffID = ?`,
-        [firstName, lastName, email, phone, department, staffId]
+      await connection.query(
+        'UPDATE Staff SET Phone = ?, Email = ? WHERE StaffID = ?',
+        [phone || null, email || null, staffId]
       );
-    } else if (firstName && lastName) {
-      // Create new Staff record if missing
-      const [newStaff] = await pool.query(
-        `INSERT INTO Staff (FirstName, LastName, Role, Department, Phone, Email, HireDate, IsActive)
-         VALUES (?, ?, 'Other', ?, ?, ?, CURDATE(), TRUE)`,
-        [firstName, lastName, department || 'Forensic Medicine', phone || null, email || null]
-      );
-      await pool.query('UPDATE User SET StaffID = ? WHERE UserID = ?', [newStaff.insertId, userId]);
     }
 
-    // 3. Change password if provided
-    if (newPassword) {
-      if (!currentPassword) {
-        return res.status(400).json({ success: false, message: 'Current password is required to set new password' });
-      }
-
-      const [userRows] = await pool.query('SELECT PasswordHash FROM User WHERE UserID = ?', [userId]);
-      const isMatch = await bcrypt.compare(currentPassword, userRows[0].PasswordHash);
-
-      if (!isMatch) {
-        return res.status(400).json({ success: false, message: 'Incorrect current password' });
-      }
-
+    // 2. Hash and update password if provided
+    if (password && password.trim() !== '') {
       const salt = await bcrypt.genSalt(10);
-      const newHash = await bcrypt.hash(newPassword, salt);
-      await pool.query('UPDATE User SET PasswordHash = ? WHERE UserID = ?', [newHash, userId]);
+      const passwordHash = await bcrypt.hash(password, salt);
+      await connection.query(
+        'UPDATE User SET PasswordHash = ?, PasswordLastChanged = NOW() WHERE UserID = ?',
+        [passwordHash, userId]
+      );
     }
 
-    // Return updated user object
-    const [updatedUsers] = await pool.query(
-      `SELECT u.UserID, u.Username, u.StaffID, u.RoleID, r.RoleName,
-              s.FirstName, s.LastName, s.Email, s.Phone, s.Department
-       FROM User u
-       JOIN Role r ON u.RoleID = r.RoleID
-       LEFT JOIN Staff s ON u.StaffID = s.StaffID
-       WHERE u.UserID = ?`,
-      [userId]
-    );
-
-    res.json({
-      success: true,
-      message: 'Profile updated successfully',
-      user: updatedUsers[0]
-    });
+    await connection.commit();
+    res.json({ success: true, message: 'Profile settings updated successfully' });
   } catch (error) {
+    await connection.rollback();
     console.error('updateProfile Error:', error);
-    res.status(500).json({ success: false, message: 'Failed to update profile', error: error.message });
+    res.status(500).json({ success: false, message: 'Failed to update profile settings', error: error.message });
+  } finally {
+    connection.release();
   }
 };

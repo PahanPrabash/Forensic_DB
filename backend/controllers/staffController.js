@@ -6,7 +6,7 @@ import pool from '../config/db.js';
 export const getAllStaff = async (req, res) => {
   try {
     const [staff] = await pool.query(
-      `SELECT s.*, d.DoctorID, d.MedicalRegNo, d.Specialization, d.Designation
+      `SELECT s.*, d.DoctorID, d.MedicalRegNo, d.Specialization, d.Designation, d.Qualifications
        FROM Staff s
        LEFT JOIN Doctor d ON s.StaffID = d.StaffID
        ORDER BY s.LastName, s.FirstName`
@@ -90,5 +90,58 @@ export const createDoctor = async (req, res) => {
   } catch (error) {
     console.error('createDoctor Error:', error);
     res.status(500).json({ success: false, message: 'Failed to register doctor', error: error.message });
+  }
+};
+
+// @desc    Toggle staff active status
+// @route   PUT /api/staff/:id/status
+// @access  Private (Admin)
+export const updateStaffStatus = async (req, res) => {
+  const { id } = req.params;
+  const { isActive } = req.body;
+
+  try {
+    await pool.query(
+      'UPDATE Staff SET IsActive = ? WHERE StaffID = ?',
+      [isActive, id]
+    );
+    res.json({ success: true, message: 'Staff status updated successfully' });
+  } catch (error) {
+    console.error('updateStaffStatus Error:', error);
+    res.status(500).json({ success: false, message: 'Failed to update status', error: error.message });
+  }
+};
+
+// @desc    Delete staff member
+// @route   DELETE /api/staff/:id
+// @access  Private (Admin)
+export const deleteStaff = async (req, res) => {
+  const { id } = req.params;
+
+  if (parseInt(id) === 1) {
+    return res.status(400).json({ success: false, message: 'Cannot delete the primary System Administrator' });
+  }
+
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    // 1. Delete linked Doctor credentials if any
+    await connection.query('DELETE FROM Doctor WHERE StaffID = ?', [id]);
+
+    // 2. Delete linked User login profile if any
+    await connection.query('DELETE FROM User WHERE StaffID = ?', [id]);
+
+    // 3. Delete Staff record
+    await connection.query('DELETE FROM Staff WHERE StaffID = ?', [id]);
+
+    await connection.commit();
+    res.json({ success: true, message: 'Staff member and all linked accounts deleted successfully' });
+  } catch (error) {
+    await connection.rollback();
+    console.error('deleteStaff Error:', error);
+    res.status(500).json({ success: false, message: 'Failed to delete staff member', error: error.message });
+  } finally {
+    connection.release();
   }
 };

@@ -7,7 +7,10 @@ const Signup = () => {
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [roleId, setRoleId] = useState('2'); // Default to JMO doctor role
+  const [staffId, setStaffId] = useState('');
+  const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
@@ -18,12 +21,31 @@ const Signup = () => {
     setErrorMessage('');
     setSuccessMessage('');
 
+    if (password !== confirmPassword) {
+      setErrorMessage('Passwords do not match.');
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
-      const res = await authAPI.register({
+      const payload = {
         username,
         password,
         roleId: parseInt(roleId)
-      });
+      };
+
+      // Add double verification fields for non-admin roles
+      if (roleId !== '1') {
+        if (!staffId || !email) {
+          setErrorMessage('Staff ID and Registered Email Address are required.');
+          setIsSubmitting(false);
+          return;
+        }
+        payload.staffId = staffId.trim(); // Send string (e.g. STF-002) to backend
+        payload.email = email.trim();
+      }
+
+      const res = await authAPI.register(payload);
 
       if (res.success) {
         setSuccessMessage('Account registered successfully! Redirecting to login...');
@@ -87,7 +109,7 @@ const Signup = () => {
 
         <form onSubmit={handleSignup}>
           <div className="form-group" style={{ marginBottom: '1rem' }}>
-            <label htmlFor="username" className="form-label">Username</label>
+            <label htmlFor="username" className="form-label">System Username</label>
             <input 
               type="text" 
               id="username" 
@@ -114,9 +136,43 @@ const Signup = () => {
               <option value="4">Laboratory Staff</option>
             </select>
           </div>
+
+          {/* Double Verification Fields (Staff ID and Email) */}
+          {roleId !== '1' && (
+            <>
+              <div className="form-group" style={{ marginBottom: '1rem' }}>
+                <label htmlFor="staffId" className="form-label">Staff ID *</label>
+                <input 
+                  type="text" 
+                  id="staffId" 
+                  className="form-control" 
+                  placeholder="e.g. STF-002" 
+                  required 
+                  value={staffId}
+                  onChange={(e) => setStaffId(e.target.value)}
+                />
+              </div>
+
+              <div className="form-group" style={{ marginBottom: '1rem' }}>
+                <label htmlFor="email" className="form-label">Registered Email Address *</label>
+                <input 
+                  type="email" 
+                  id="email" 
+                  className="form-control" 
+                  placeholder="Enter your registered email" 
+                  required 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>
+                  Must match the exact email and ID registered in the staff directory by the Administrator.
+                </span>
+              </div>
+            </>
+          )}
           
-          <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-            <label htmlFor="password" className="form-label">Password</label>
+          <div className="form-group" style={{ marginBottom: '1rem' }}>
+            <label htmlFor="password" className="form-label">Password *</label>
             <input 
               type="password" 
               id="password" 
@@ -125,6 +181,19 @@ const Signup = () => {
               required 
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+
+          <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+            <label htmlFor="confirmPassword" className="form-label">Confirm Password *</label>
+            <input 
+              type="password" 
+              id="confirmPassword" 
+              className="form-control" 
+              placeholder="Confirm your password" 
+              required 
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
             />
           </div>
 

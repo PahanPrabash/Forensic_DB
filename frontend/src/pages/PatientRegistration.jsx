@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { caseAPI } from '../services/api';
+import { caseAPI, staffAPI } from '../services/api';
 
 const PatientRegistration = () => {
   const navigate = useNavigate();
@@ -19,11 +19,28 @@ const PatientRegistration = () => {
     incidentDate: '',
     incidentLocation: '',
     description: '',
-    assignedDoctorId: 1
+    assignedDoctorId: ''
   });
 
+  const [doctors, setDoctors] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      try {
+        const res = await staffAPI.getAllDoctors();
+        if (res.success && res.data.length > 0) {
+          setDoctors(res.data);
+          setFormData((prev) => ({ ...prev, assignedDoctorId: res.data[0].DoctorID }));
+        }
+      } catch (err) {
+        console.warn('Could not retrieve JMO doctors from database:', err.message);
+      }
+    };
+
+    fetchDoctors();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -146,6 +163,25 @@ const PatientRegistration = () => {
               <label className="form-label">Incident Location</label>
               <input type="text" name="incidentLocation" className="form-control" value={formData.incidentLocation} onChange={handleChange} placeholder="e.g. Kandy Town" />
             </div>
+            
+            {/* Dynamic Assigned Doctor Field */}
+            <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+              <label className="form-label">Assigned JMO Doctor *</label>
+              <select 
+                name="assignedDoctorId" 
+                className="form-control" 
+                value={formData.assignedDoctorId} 
+                onChange={handleChange} 
+                required
+              >
+                {doctors.map((d) => (
+                  <option key={d.DoctorID} value={d.DoctorID}>
+                    Dr. {d.LastName} ({d.Specialization || 'JMO'}) — SLMC: {d.MedicalRegNo}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <div className="form-group" style={{ gridColumn: '1 / -1' }}>
               <label className="form-label">Brief Description of Incident</label>
               <textarea name="description" className="form-control" rows="3" value={formData.description} onChange={handleChange} placeholder="Describe incident details..."></textarea>

@@ -13,6 +13,7 @@ import Evidence from './pages/Evidence';
 import Reports from './pages/Reports';
 import Signup from './pages/Signup';
 import Profile from './pages/Profile';
+import StaffManagement from './pages/StaffManagement';
 
 function App() {
   return (
@@ -34,6 +35,7 @@ function App() {
             <Route path="/evidence" element={<Evidence />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/staff" element={<StaffManagement />} />
           </Route>
         </Routes>
       </Router>

@@ -72,6 +72,19 @@ const AppLayout = () => {
             </NavLink>
           </div>
           
+          {user?.RoleName === 'System Administrator' && (
+            <>
+              <div style={{ margin: '1.5rem 0 0.5rem', fontSize: '0.75rem', textTransform: 'uppercase', color: '#475569', fontWeight: '700', letterSpacing: '0.05em', paddingLeft: '1rem' }}>
+                Administration
+              </div>
+              <div className="nav-item">
+                <NavLink to="/staff" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
+                  <ion-icon name="people-outline"></ion-icon> Staff Directory
+                </NavLink>
+              </div>
+            </>
+          )}
+
           <div style={{ margin: '1.5rem 0 0.5rem', fontSize: '0.75rem', textTransform: 'uppercase', color: '#475569', fontWeight: '700', letterSpacing: '0.05em', paddingLeft: '1rem' }}>
             Account
           </div>

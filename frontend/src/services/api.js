@@ -39,6 +39,8 @@ export const authAPI = {
 export const staffAPI = {
   getAllStaff: () => request('/staff', { method: 'GET' }),
   createStaff: (staffData) => request('/staff', { method: 'POST', body: JSON.stringify(staffData) }),
+  updateStatus: (id, isActive) => request(`/staff/${id}/status`, { method: 'PUT', body: JSON.stringify({ isActive }) }),
+  deleteStaff: (id) => request(`/staff/${id}`, { method: 'DELETE' }),
   getAllDoctors: () => request('/staff/doctors', { method: 'GET' }),
   createDoctor: (doctorData) => request('/staff/doctors', { method: 'POST', body: JSON.stringify(doctorData) })
 };

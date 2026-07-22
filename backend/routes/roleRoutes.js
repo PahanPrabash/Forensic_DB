@@ -1,13 +1,13 @@
 import express from 'express';
 import { getAllRoles, getRolePermissions, updateRolePermission } from '../controllers/roleController.js';
-import { protect, authorize } from '../middleware/authMiddleware.js';
+import { protect, checkModulePermission } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
 router.use(protect);
 
-router.get('/', getAllRoles);
-router.get('/:roleId/permissions', getRolePermissions);
-router.put('/:roleId/permissions', authorize('System Administrator'), updateRolePermission);
+router.get('/', checkModulePermission('UserAdmin', 'read'), getAllRoles);
+router.get('/:roleId/permissions', checkModulePermission('UserAdmin', 'read'), getRolePermissions);
+router.put('/:roleId/permissions', checkModulePermission('UserAdmin', 'update'), updateRolePermission);
 
 export default router;
