@@ -26,98 +26,151 @@ const AppLayout = () => {
     return user.username || 'User Profile';
   };
 
+  const showLink = (moduleName) => {
+    if (!user) return false;
+    const roleId = parseInt(user.RoleID || user.roleId);
+    
+    // System Administrator (Role ID 1)
+    if (roleId === 1) {
+      return ['Dashboard', 'Staff', 'Audit', 'Profile'].includes(moduleName);
+    }
+    // Examining Doctor (JMO) (Role ID 2)
+    if (roleId === 2) {
+      return ['Dashboard', 'Cases', 'Clinical', 'MLR', 'Referrals', 'Autopsy', 'CauseOfDeath', 'Court', 'Evidence', 'Reports', 'Profile'].includes(moduleName);
+    }
+    // Registrar Clerk (Role ID 3)
+    if (roleId === 3) {
+      return ['Dashboard', 'Cases', 'Court', 'Reports', 'Profile'].includes(moduleName);
+    }
+    // Laboratory Staff (Role ID 4)
+    if (roleId === 4) {
+      return ['Dashboard', 'Evidence', 'Profile'].includes(moduleName);
+    }
+    return false;
+  };
+
   return (
     <div className="app-container">
       {/* Sidebar Navigation */}
       <aside className="sidebar">
-        <div className="sidebar-header">
+        <div className="sidebar-header" onClick={() => navigate('/dashboard')} style={{ cursor: 'pointer' }} title="Go to Dashboard">
           <ion-icon name="medical" style={{ color: 'var(--primary)', fontSize: '1.5rem' }}></ion-icon>
           <span className="sidebar-logo">Forensic DB</span>
         </div>
         
         <nav className="nav-menu">
-          <div className="nav-item">
-            <NavLink to="/dashboard" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
-              <ion-icon name="grid-outline"></ion-icon> Dashboard
-            </NavLink>
-          </div>
+          {showLink('Dashboard') && (
+            <div className="nav-item">
+              <NavLink to="/dashboard" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
+                <ion-icon name="grid-outline"></ion-icon> Dashboard
+              </NavLink>
+            </div>
+          )}
           
-          <div style={{ margin: '1.5rem 0 0.5rem', fontSize: '0.75rem', textTransform: 'uppercase', color: '#475569', fontWeight: '700', letterSpacing: '0.05em', paddingLeft: '1rem' }}>
-            Modules
-          </div>
+          {(showLink('Cases') || showLink('Clinical') || showLink('MLR') || showLink('Referrals') || showLink('Autopsy') || showLink('CauseOfDeath') || showLink('Court') || showLink('Evidence') || showLink('Reports')) && (
+            <div style={{ margin: '1.5rem 0 0.5rem', fontSize: '0.75rem', textTransform: 'uppercase', color: '#475569', fontWeight: '700', letterSpacing: '0.05em', paddingLeft: '1rem' }}>
+              Modules
+            </div>
+          )}
           
-          <div className="nav-item">
-            <NavLink to="/cases" className={({ isActive }) => (isActive || window.location.pathname === '/register-patient' ? 'nav-link active' : 'nav-link')}>
-              <ion-icon name="folder-outline"></ion-icon> Patient & Cases
-            </NavLink>
-          </div>
-          <div className="nav-item">
-            <NavLink to="/clinical-mlef" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
-              <ion-icon name="document-text-outline"></ion-icon> Clinical (MLEF)
-            </NavLink>
-          </div>
-          <div className="nav-item">
-            <NavLink to="/mlr-report" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
-              <ion-icon name="reader-outline"></ion-icon> MLR Reports
-            </NavLink>
-          </div>
-          <div className="nav-item">
-            <NavLink to="/referrals" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
-              <ion-icon name="git-branch-outline"></ion-icon> Referrals & Reviews
-            </NavLink>
-          </div>
-          <div className="nav-item">
-            <NavLink to="/autopsy-pmr" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
-              <ion-icon name="flask-outline"></ion-icon> Autopsy (PMR)
-            </NavLink>
-          </div>
-          <div className="nav-item">
-            <NavLink to="/cause-of-death" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
-              <ion-icon name="document-outline"></ion-icon> Cause of Death
-            </NavLink>
-          </div>
-          <div className="nav-item">
-            <NavLink to="/court-summons" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
-              <ion-icon name="calendar-outline"></ion-icon> Court Summons
-            </NavLink>
-          </div>
-          <div className="nav-item">
-            <NavLink to="/audit-notifications" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
-              <ion-icon name="notifications-circle-outline"></ion-icon> Audit & Alerts
-            </NavLink>
-          </div>
-          <div className="nav-item">
-            <NavLink to="/evidence" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
-              <ion-icon name="barcode-outline"></ion-icon> Evidence & Lab
-            </NavLink>
-          </div>
-          <div className="nav-item">
-            <NavLink to="/reports" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
-              <ion-icon name="stats-chart-outline"></ion-icon> Reports
-            </NavLink>
-          </div>
+          {showLink('Cases') && (
+            <div className="nav-item">
+              <NavLink to="/cases" className={({ isActive }) => (isActive || window.location.pathname === '/register-patient' ? 'nav-link active' : 'nav-link')}>
+                <ion-icon name="folder-outline"></ion-icon> Patient & Cases
+              </NavLink>
+            </div>
+          )}
+          {showLink('Clinical') && (
+            <div className="nav-item">
+              <NavLink to="/clinical-mlef" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
+                <ion-icon name="document-text-outline"></ion-icon> Clinical (MLEF)
+              </NavLink>
+            </div>
+          )}
+          {showLink('MLR') && (
+            <div className="nav-item">
+              <NavLink to="/mlr-report" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
+                <ion-icon name="reader-outline"></ion-icon> MLR Reports
+              </NavLink>
+            </div>
+          )}
+          {showLink('Referrals') && (
+            <div className="nav-item">
+              <NavLink to="/referrals" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
+                <ion-icon name="git-branch-outline"></ion-icon> Referrals & Reviews
+              </NavLink>
+            </div>
+          )}
+          {showLink('Autopsy') && (
+            <div className="nav-item">
+              <NavLink to="/autopsy-pmr" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
+                <ion-icon name="flask-outline"></ion-icon> Autopsy (PMR)
+              </NavLink>
+            </div>
+          )}
+          {showLink('CauseOfDeath') && (
+            <div className="nav-item">
+              <NavLink to="/cause-of-death" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
+                <ion-icon name="document-outline"></ion-icon> Cause of Death
+              </NavLink>
+            </div>
+          )}
+          {showLink('Court') && (
+            <div className="nav-item">
+              <NavLink to="/court-summons" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
+                <ion-icon name="calendar-outline"></ion-icon> Court Summons
+              </NavLink>
+            </div>
+          )}
+          {showLink('Evidence') && (
+            <div className="nav-item">
+              <NavLink to="/evidence" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
+                <ion-icon name="barcode-outline"></ion-icon> Evidence & Lab
+              </NavLink>
+            </div>
+          )}
+          {showLink('Reports') && (
+            <div className="nav-item">
+              <NavLink to="/reports" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
+                <ion-icon name="stats-chart-outline"></ion-icon> Reports
+              </NavLink>
+            </div>
+          )}
           
-          {user?.RoleName === 'System Administrator' && (
+          {(showLink('Staff') || showLink('Audit')) && (
             <>
               <div style={{ margin: '1.5rem 0 0.5rem', fontSize: '0.75rem', textTransform: 'uppercase', color: '#475569', fontWeight: '700', letterSpacing: '0.05em', paddingLeft: '1rem' }}>
                 Administration
               </div>
+              {showLink('Staff') && (
+                <div className="nav-item">
+                  <NavLink to="/staff" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
+                    <ion-icon name="people-outline"></ion-icon> Staff Directory
+                  </NavLink>
+                </div>
+              )}
+              {showLink('Audit') && (
+                <div className="nav-item">
+                  <NavLink to="/audit-notifications" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
+                    <ion-icon name="notifications-circle-outline"></ion-icon> Audit & Alerts
+                  </NavLink>
+                </div>
+              )}
+            </>
+          )}
+
+          {showLink('Profile') && (
+            <>
+              <div style={{ margin: '1.5rem 0 0.5rem', fontSize: '0.75rem', textTransform: 'uppercase', color: '#475569', fontWeight: '700', letterSpacing: '0.05em', paddingLeft: '1rem' }}>
+                Account
+              </div>
               <div className="nav-item">
-                <NavLink to="/staff" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
-                  <ion-icon name="people-outline"></ion-icon> Staff Directory
+                <NavLink to="/profile" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
+                  <ion-icon name="person-circle-outline"></ion-icon> Profile Settings
                 </NavLink>
               </div>
             </>
           )}
-
-          <div style={{ margin: '1.5rem 0 0.5rem', fontSize: '0.75rem', textTransform: 'uppercase', color: '#475569', fontWeight: '700', letterSpacing: '0.05em', paddingLeft: '1rem' }}>
-            Account
-          </div>
-          <div className="nav-item">
-            <NavLink to="/profile" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
-              <ion-icon name="person-circle-outline"></ion-icon> Profile Settings
-            </NavLink>
-          </div>
         </nav>
       </aside>
 
@@ -135,20 +188,19 @@ const AppLayout = () => {
               <ion-icon name="notifications-outline" style={{ fontSize: '1.5rem', color: 'var(--text-muted)' }}></ion-icon>
               <span style={{ position: 'absolute', top: '-2px', right: '-2px', background: 'var(--danger)', width: '10px', height: '10px', borderRadius: '50%', border: '2px solid var(--bg-dark)' }}></span>
             </div>
-            
             {/* User Profile Pill */}
             <div 
               onClick={() => navigate('/profile')}
+              className="user-profile"
               style={{
                 display: 'flex', alignItems: 'center', gap: '10px', padding: '0.5rem 1rem',
-                background: 'var(--glass-bg)', border: 'var(--glass-border)', borderRadius: '20px',
-                cursor: 'pointer', transition: 'all 0.2s'
+                borderRadius: '20px', cursor: 'pointer', transition: 'all 0.2s'
               }}
               title="Click to Edit Profile"
             >
-              <div style={{
-                width: '30px', height: '30px', background: 'var(--primary)', borderRadius: '50%',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600', color: '#fff', fontSize: '0.85rem'
+              <div className="avatar" style={{
+                width: '30px', height: '30px', borderRadius: '50%',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600', fontSize: '0.85rem'
               }}>
                 {getInitials()}
               </div>

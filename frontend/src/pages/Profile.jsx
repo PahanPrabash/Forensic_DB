@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { authAPI } from '../services/api';
 
@@ -80,8 +81,15 @@ const Profile = () => {
   return (
     <div className="page-content animate-slide-up">
       <div style={{ marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '1.75rem', marginBottom: '0.5rem' }}>User Profile & Settings</h1>
-        <p style={{ margin: 0, color: 'var(--text-muted)' }}>Manage your username, account details, contact info, and security credentials.</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>
+          <Link to="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--primary)' }}>
+            <ion-icon name="home-outline"></ion-icon> Home
+          </Link>
+          <span>/</span>
+          <span>Profile Settings</span>
+        </div>
+        <h1 style={{ fontSize: '1.75rem', margin: 0 }}>User Profile & Settings</h1>
+        <p style={{ margin: '0.25rem 0 0 0', color: 'var(--text-muted)' }}>Manage your username, account details, contact info, and security credentials.</p>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '2rem' }}>

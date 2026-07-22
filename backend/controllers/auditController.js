@@ -1,17 +1,22 @@
-const db = require('../config/db');
+import pool from '../config/db.js';
 
-exports.getAuditLogs = async (req, res) => {
+export const getAuditLogs = async (req, res) => {
   try {
-    const [rows] = await db.query('SELECT * FROM AuditLog ORDER BY Timestamp DESC LIMIT 100');
+    const [rows] = await pool.query(`
+      SELECT a.LogID AS AuditID, a.UserID, u.Username, a.Action, a.TableAffected, a.RecordID, a.Timestamp, a.IPAddress, a.OldValue, a.NewValue 
+      FROM AuditLog a 
+      LEFT JOIN User u ON a.UserID = u.UserID 
+      ORDER BY a.Timestamp DESC LIMIT 100
+    `);
     res.json({ success: true, data: rows });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
 };
 
-exports.getNotifications = async (req, res) => {
+export const getNotifications = async (req, res) => {
   try {
-    const [rows] = await db.query('SELECT * FROM Notification ORDER BY CreatedAt DESC LIMIT 100');
+    const [rows] = await pool.query('SELECT * FROM Notification ORDER BY CreatedAt DESC LIMIT 100');
     res.json({ success: true, data: rows });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });

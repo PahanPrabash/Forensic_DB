@@ -7,6 +7,8 @@ import staffRoutes from './routes/staffRoutes.js';
 import roleRoutes from './routes/roleRoutes.js';
 import dashboardRoutes from './routes/dashboardRoutes.js';
 import caseRoutes from './routes/caseRoutes.js';
+import auditRoutes from './routes/auditRoutes.js';
+import reportRoutes from './routes/reportRoutes.js';
 
 dotenv.config();
 
@@ -23,6 +25,8 @@ app.use('/api/staff', staffRoutes);
 app.use('/api/roles', roleRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/cases', caseRoutes);
+app.use('/api/audit', auditRoutes);
+app.use('/api/reports', reportRoutes);
 
 // Health Check Endpoint
 app.get('/api/health', (req, res) => {

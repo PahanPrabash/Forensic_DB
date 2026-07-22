@@ -117,6 +117,64 @@ const seedDatabase = async () => {
       [adminPasswordHash]
     );
 
+    // 5. Seed Default Report Templates
+    console.log('➡️ Seeding Default Report Templates...');
+    const mlrContent = `--------------------------------------------------
+DEPARTMENT OF FORENSIC MEDICINE - COURT REPORT BOILERPLATE
+--------------------------------------------------
+CASE DETAILS:
+Case Number: {{case_number}}
+Patient Name: {{patient_name}}
+Date of Examination: {{exam_date}}
+
+CLINICAL FINDINGS & HISTORY:
+{{clinical_findings}}
+
+LIST OF PHYSICAL INJURIES:
+{{injuries}}
+
+PROFESSIONAL FORENSIC OPINION:
+Based on the medical exam and clinical evaluation, the injuries noted above are consistent with:
+{{opinion}}
+
+--------------------------------------------------
+Prepared by: {{doctor_signature}}
+Judicial Medical Officer (JMO)
+Forensic Department, University of Peradeniya`;
+
+    const pmrContent = `--------------------------------------------------
+DEPARTMENT OF FORENSIC MEDICINE - AUTOPSY CERTIFICATE PMR
+--------------------------------------------------
+POSTMORTEM CASE DETAILS:
+Autopsy Case Number: {{pmr_case_number}}
+Deceased Name: {{deceased_name}}
+Date & Time of Autopsy: {{autopsy_date}}
+Inquest Reference: {{inquest_order}}
+
+EXTERNAL EXAMINATION FINDINGS:
+{{external_exam}}
+
+INTERNAL EXAMINATION FINDINGS:
+{{internal_exam}}
+
+CAUSE OF DEATH DETERMINATION:
+1. Primary Cause: {{cause_death_1}}
+2. Contributory Cause: {{cause_death_2}}
+
+--------------------------------------------------
+Certified by: {{doctor_signature}}
+Judicial Medical Officer (JMO)
+Forensic Department, University of Peradeniya`;
+
+    await pool.query(
+      `INSERT INTO ReportTemplate (TemplateID, TemplateName, TemplateType, TemplateContent, CreatedBy, IsActive)
+       VALUES 
+       (1, 'Medico-Legal Report (MLR) Boilerplate', 'MLR', ?, 1, TRUE),
+       (2, 'Postmortem Examination (PMR) Boilerplate', 'PMR', ?, 1, TRUE)
+       ON DUPLICATE KEY UPDATE TemplateName=VALUES(TemplateName), TemplateContent=VALUES(TemplateContent)`,
+      [mlrContent, pmrContent]
+    );
+
     console.log('✅ Database seeding complete!');
     console.log('📌 Default System Administrator profile is active:');
     console.log('   Username: admin | Password: admin123');

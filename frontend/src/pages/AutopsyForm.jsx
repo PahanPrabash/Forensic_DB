@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 const AutopsyForm = () => {
   const navigate = useNavigate();
@@ -37,8 +37,18 @@ const AutopsyForm = () => {
 
   return (
     <div className="page-content animate-fade-in">
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1.5rem' }}>
-        <button className="btn btn-primary" type="button" onClick={() => navigate('/cases')}>Back to Cases</button>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>
+            <Link to="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--primary)' }}>
+              <ion-icon name="home-outline"></ion-icon> Home
+            </Link>
+            <span>/</span>
+            <span>Autopsy (PMR)</span>
+          </div>
+          <h1 style={{ fontSize: '1.75rem', margin: 0 }}>Postmortem Examination (PMR) Form</h1>
+        </div>
+        <button className="btn btn-secondary" type="button" onClick={() => navigate('/cases')}>Back to Cases</button>
       </div>
 
       <div className="glass-panel" style={{ padding: '2rem', maxWidth: '1000px', margin: '0 auto' }}>
