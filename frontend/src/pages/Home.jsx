@@ -47,7 +47,7 @@ const Home = () => {
       draw() {
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(59, 130, 246, ${this.opacity})`;
+        ctx.fillStyle = `rgba(56, 189, 248, ${this.opacity})`;
         ctx.fill();
       }
     }
@@ -71,7 +71,7 @@ const Home = () => {
             ctx.beginPath();
             ctx.moveTo(particles[i].x, particles[i].y);
             ctx.lineTo(particles[j].x, particles[j].y);
-            ctx.strokeStyle = `rgba(59, 130, 246, ${0.06 * (1 - dist / 150)})`;
+            ctx.strokeStyle = `rgba(56, 189, 248, ${0.06 * (1 - dist / 150)})`;
             ctx.lineWidth = 0.5;
             ctx.stroke();
           }
@@ -97,13 +97,13 @@ const Home = () => {
       icon: 'shield-checkmark',
       title: 'Secure Case Management',
       desc: 'Military-grade encryption for all forensic case files and patient records.',
-      color: '#3b82f6',
+      color: '#38bdf8',
     },
     {
       icon: 'document-text',
       title: 'Digital MLEF Forms',
       desc: 'Generate medico-legal examination forms with automated data pre-fill.',
-      color: '#0ea5e9',
+      color: '#7dd3fc',
     },
     {
       icon: 'flask',

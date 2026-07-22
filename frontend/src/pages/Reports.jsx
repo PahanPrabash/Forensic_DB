@@ -1,7 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const Reports = () => {
   const [reports, setReports] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/reports')
+      .then(res => res.json())
+      .then(data => {
+        setReports(data.data || []);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error(err);
+        setLoading(false);
+      });
+  }, []);
 
   return (
     <div className="page-content animate-fade-in">
@@ -45,14 +59,20 @@ const Reports = () => {
               </tr>
             </thead>
             <tbody>
-              {reports.length > 0 ? (
+              {loading ? (
+                <tr>
+                  <td colSpan="6" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>
+                    Loading reports...
+                  </td>
+                </tr>
+              ) : reports.length > 0 ? (
                 reports.map((r) => (
                   <tr key={r.ReportID}>
-                    <td style={{ fontFamily: 'monospace' }}>{r.ReportNumber}</td>
-                    <td><span className="badge badge-primary">{r.ReportType}</span></td>
+                    <td style={{ fontFamily: 'monospace' }}>{r.ReportNumber || `REP-${r.ReportID}`}</td>
+                    <td><span className="badge badge-primary">{r.ReportType || 'MLR'}</span></td>
                     <td>{r.CaseNumber}</td>
-                    <td>{r.GeneratedBy}</td>
-                    <td>{r.Date}</td>
+                    <td>{r.GeneratedBy || `Dr. ${r.DoctorLastName || 'JMO'}`}</td>
+                    <td>{r.Date || new Date(r.IssuedDate).toLocaleDateString()}</td>
                     <td>
                       <button className="btn btn-secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}>
                         <ion-icon name="download-outline"></ion-icon> PDF

@@ -544,3 +544,52 @@ CREATE TABLE ReportTemplate (
 
 SHOW TABLES;
 
+-- ═══════════════════════════════════════════════════════════════════════════
+-- MEMBER 2 TRIGGER: Auto-generating unique case numbers (CW/YEAR/XXX)
+-- ═══════════════════════════════════════════════════════════════════════════
+DELIMITER //
+
+CREATE TRIGGER before_case_insert
+BEFORE INSERT ON `Case`
+FOR EACH ROW
+BEGIN
+    DECLARE current_year INT;
+    DECLARE next_num INT;
+    DECLARE num_suffix VARCHAR(10);
+    
+    SET current_year = YEAR(NEW.IncidentDate);
+    IF current_year IS NULL THEN
+        SET current_year = YEAR(CURDATE());
+    END IF;
+    
+    -- Count existing cases for this year to get the next sequential number
+    SELECT COUNT(*) + 1 INTO next_num 
+    FROM `Case` 
+    WHERE YEAR(IncidentDate) = current_year;
+    
+    SET num_suffix = LPAD(next_num, 3, '0');
+    SET NEW.CaseNumber = CONCAT('CW/', current_year, '/', num_suffix);
+END//
+
+DELIMITER ;
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- SUMMARY
+-- ═══════════════════════════════════════════════════════════════════════════
+-- Total Tables Created: 25
+-- 
+-- Module 1 (Patient & Case):    Patient, Case, CaseHistory
+-- Module 2 (Clinical):          MedicoLegalExamForm, MedicoLegalReport, Referral, ReviewAppointment
+-- Module 3 (Autopsy):           Postmortem, CauseOfDeath, InquestOrder
+-- Module 4 (Evidence):          Evidence, ChainOfCustody, LaboratoryTest
+-- Module 5 (Court):             CourtReport, CourtSummons
+-- Module 6 (Staff):             Staff, Doctor
+-- Module 7 (Auth):              User, Role, RolePermission
+-- Module 8 (Documents):         Document, Photograph
+-- Module 9 (Notifications):     Notification, AuditLog
+-- Module 10 (Reports):          ReportTemplate
+-- 
+-- All tables use InnoDB engine for transaction support and foreign key constraints.
+-- Proper indexes are created on frequently queried columns.
+-- Referential integrity is enforced with ON UPDATE CASCADE and appropriate ON DELETE actions.
+
