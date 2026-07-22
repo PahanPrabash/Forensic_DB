@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const MlefForm = () => {
@@ -9,10 +10,22 @@ const MlefForm = () => {
 
   return (
     <div className="page-content animate-fade-in">
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginBottom: '1.5rem' }}>
-        <span className="badge badge-warning" style={{ alignSelf: 'center' }}>Draft Mode</span>
-        <button className="btn btn-secondary"><ion-icon name="save-outline"></ion-icon> Save Draft</button>
-        <button className="btn btn-primary"><ion-icon name="checkmark-circle-outline"></ion-icon> Finalize MLEF</button>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>
+            <Link to="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--primary)' }}>
+              <ion-icon name="home-outline"></ion-icon> Home
+            </Link>
+            <span>/</span>
+            <span>Clinical (MLEF)</span>
+          </div>
+          <h1 style={{ fontSize: '1.75rem', margin: 0 }}>Medico-Legal Examination Form</h1>
+        </div>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <span className="badge badge-warning" style={{ alignSelf: 'center' }}>Draft Mode</span>
+          <button className="btn btn-secondary"><ion-icon name="save-outline"></ion-icon> Save Draft</button>
+          <button className="btn btn-primary"><ion-icon name="checkmark-circle-outline"></ion-icon> Finalize MLEF</button>
+        </div>
       </div>
 
       <div className="glass-panel" style={{ padding: '2rem', maxWidth: '1000px', margin: '0 auto' }}>

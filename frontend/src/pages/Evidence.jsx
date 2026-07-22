@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
 
 const Evidence = () => {
@@ -96,23 +97,41 @@ const Evidence = () => {
     }
   };
 
-  const handleTransferCustody = async (e) => {
+  const handleTransfer = async (e) => {
     e.preventDefault();
+    if (!selectedEvidence) return;
     setIsSubmitting(true);
     setTransferError('');
     setTransferSuccess('');
 
-    // Custody transfer is a placeholder — the backend doesn't have this endpoint yet
+    const formData = new FormData(e.target);
+    const payload = {
+      action: formData.get('actionType'),
+      releasedBy: formData.get('releasedBy'),
+      receivedBy: formData.get('receivedBy'),
+      location: formData.get('location') || 'N/A',
+      remarks: formData.get('remarks')
+    };
+
     try {
-      setTransferSuccess('Custody transfer recorded successfully!');
-      setTimeout(() => {
-        setSelectedEvidence(null);
-        setTransferSuccess('');
-        fetchEvidence();
-      }, 1500);
+      const res = await fetch(`/api/evidence/${selectedEvidence.EvidenceID}/chain`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        setTransferSuccess('Chain of custody logged successfully!');
+        setTimeout(() => {
+          setTransferSuccess('');
+          fetchEvidence();
+        }, 1000);
+      } else {
+        const error = await res.json();
+        setTransferError(error.error || 'Failed to record chain of custody');
+      }
     } catch (err) {
       console.error(err);
-      setTransferError('Failed to transfer custody');
+      setTransferError('Network error');
     } finally {
       setIsSubmitting(false);
     }
@@ -138,7 +157,17 @@ const Evidence = () => {
 
   return (
     <div className="page-content animate-fade-in">
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1.5rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>
+            <Link to="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--primary)' }}>
+              <ion-icon name="home-outline"></ion-icon> Home
+            </Link>
+            <span>/</span>
+            <span>Evidence & Lab Vault</span>
+          </div>
+          <h1 style={{ fontSize: '1.75rem', margin: 0 }}>Evidence Vault & Lab Registry</h1>
+        </div>
         <button className="btn btn-primary" onClick={() => { setShowLogModal(true); setLogError(''); setLogSuccess(''); }}>
           <ion-icon name="add"></ion-icon> Log New Evidence
         </button>

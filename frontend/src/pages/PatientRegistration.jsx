@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { caseAPI, staffAPI } from '../services/api';
 
 const PatientRegistration = () => {
@@ -72,8 +72,17 @@ const PatientRegistration = () => {
         
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid var(--border)', paddingBottom: '1rem' }}>
           <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>
+              <Link to="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--primary)' }}>
+                <ion-icon name="home-outline"></ion-icon> Home
+              </Link>
+              <span>/</span>
+              <Link to="/cases" style={{ color: 'var(--primary)' }}>Patient & Cases</Link>
+              <span>/</span>
+              <span>Register Patient</span>
+            </div>
             <h2 style={{ margin: 0, fontSize: '1.4rem' }}>Register New Patient & Forensic Case</h2>
-            <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.9rem' }}>Enter victim demographic and incident details into the forensic database.</p>
+            <p style={{ margin: '0.25rem 0 0 0', color: 'var(--text-muted)', fontSize: '0.9rem' }}>Enter victim demographic and incident details into the forensic database.</p>
           </div>
         </div>
 

@@ -69,29 +69,133 @@ const Dashboard = () => {
   }, []);
 
   const displayName = user ? `${user.FirstName || user.firstName || user.Username || user.username || 'User'}` : 'User';
+  const roleId = user ? parseInt(user.RoleID || user.roleId) : 2;
 
-  return (
-    <div className="page-content">
-      {/* Welcome Header */}
-      <div className="animate-slide-up" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', animationDelay: '0.1s' }}>
-        <div>
-          <h1 style={{ fontSize: '1.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            {greeting}, {displayName}.
-            <span style={{ animation: 'float 3s ease-in-out infinite', display: 'inline-block' }}>👋</span>
-          </h1>
-          <p style={{ margin: 0 }}>Here is what's happening today in the department.</p>
-        </div>
-        <button 
-          className="btn btn-primary" 
-          onClick={() => navigate('/register-patient')}
-          style={{ position: 'relative', overflow: 'hidden' }}
-        >
-          <ion-icon name="add-outline"></ion-icon> Open New Case
-          <span className="btn-shine" />
+  // 1. Determine quick action button based on Role
+  const renderQuickActionButton = () => {
+    if (roleId === 1) {
+      return (
+        <button className="btn btn-primary" onClick={() => navigate('/staff')}>
+          <ion-icon name="people-outline"></ion-icon> Manage Staff Directory
         </button>
-      </div>
+      );
+    }
+    if (roleId === 2) {
+      return (
+        <button className="btn btn-primary" onClick={() => navigate('/clinical-mlef')}>
+          <ion-icon name="document-text-outline"></ion-icon> Open New MLEF
+        </button>
+      );
+    }
+    if (roleId === 3) {
+      return (
+        <button className="btn btn-primary" onClick={() => navigate('/cases')}>
+          <ion-icon name="add-outline"></ion-icon> Register Patient & Case
+        </button>
+      );
+    }
+    if (roleId === 4) {
+      return (
+        <button className="btn btn-primary" onClick={() => navigate('/evidence')}>
+          <ion-icon name="barcode-outline"></ion-icon> Log Evidence Receipt
+        </button>
+      );
+    }
+    return null;
+  };
 
-      {/* Stats Grid */}
+  // 2. Determine Dashboard metrics based on Role
+  const renderStatCards = () => {
+    // Admin Stats (Role 1)
+    if (roleId === 1) {
+      return (
+        <div className="grid-cards">
+          <div className="glass-panel stat-card">
+            <div className="stat-icon primary">
+              <ion-icon name="shield-checkmark"></ion-icon>
+            </div>
+            <div className="stat-info">
+              <h3>Active</h3>
+              <p>System Admin Profile</p>
+            </div>
+          </div>
+          <div className="glass-panel stat-card">
+            <div className="stat-icon success">
+              <ion-icon name="people"></ion-icon>
+            </div>
+            <div className="stat-info">
+              <h3>4</h3>
+              <p>Department Roles</p>
+            </div>
+          </div>
+          <div className="glass-panel stat-card">
+            <div className="stat-icon warning">
+              <ion-icon name="key"></ion-icon>
+            </div>
+            <div className="stat-info">
+              <h3>Active</h3>
+              <p>Module Permission Grid</p>
+            </div>
+          </div>
+          <div className="glass-panel stat-card">
+            <div className="stat-icon danger">
+              <ion-icon name="lock-closed"></ion-icon>
+            </div>
+            <div className="stat-info">
+              <h3>0</h3>
+              <p>Failed Security Logs</p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Lab Staff Stats (Role 4)
+    if (roleId === 4) {
+      return (
+        <div className="grid-cards">
+          <div className="glass-panel stat-card">
+            <div className="stat-icon primary">
+              <ion-icon name="flask"></ion-icon>
+            </div>
+            <div className="stat-info">
+              <h3><AnimatedCounter target={stats.pendingLabTests} /></h3>
+              <p>Pending Lab Tests</p>
+            </div>
+          </div>
+          <div className="glass-panel stat-card">
+            <div className="stat-icon success">
+              <ion-icon name="barcode"></ion-icon>
+            </div>
+            <div className="stat-info">
+              <h3>Active</h3>
+              <p>Chain of Custody Tracking</p>
+            </div>
+          </div>
+          <div className="glass-panel stat-card">
+            <div className="stat-icon warning">
+              <ion-icon name="folder-open"></ion-icon>
+            </div>
+            <div className="stat-info">
+              <h3><AnimatedCounter target={stats.activeCases} /></h3>
+              <p>Active Cases in System</p>
+            </div>
+          </div>
+          <div className="glass-panel stat-card">
+            <div className="stat-icon danger">
+              <ion-icon name="alert-circle"></ion-icon>
+            </div>
+            <div className="stat-info">
+              <h3>0</h3>
+              <p>Overdue Lab Reports</p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Default: JMO Doctor (Role 2) or Registrar Clerk (Role 3)
+    return (
       <div className="grid-cards">
         <div className="glass-panel stat-card">
           <div className="stat-icon primary">
@@ -119,7 +223,7 @@ const Dashboard = () => {
           </div>
           <div className="stat-info">
             <h3><AnimatedCounter target={stats.courtSummons} duration={800} /></h3>
-            <p>Court Summons this Week</p>
+            <p>Pending Court Summons</p>
           </div>
         </div>
 
@@ -133,20 +237,43 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+    );
+  };
+
+  return (
+    <div className="page-content">
+      {/* Welcome Header */}
+      <div className="animate-slide-up" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', animationDelay: '0.1s' }}>
+        <div>
+          <h1 style={{ fontSize: '1.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            {greeting}, {displayName}.
+            <span style={{ animation: 'float 3s ease-in-out infinite', display: 'inline-block' }}>👋</span>
+          </h1>
+          <p style={{ margin: 0, color: 'var(--text-muted)' }}>
+            Logged in as <b>{user?.RoleName || 'Staff Member'}</b>. Here is your overview for today.
+          </p>
+        </div>
+        {renderQuickActionButton()}
+      </div>
+
+      {/* Dynamic Stat Cards */}
+      {renderStatCards()}
 
       {/* Main Split Layout */}
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.5rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.5rem', marginTop: '2rem' }}>
         
         {/* Recent Cases Table */}
         <div className="glass-panel animate-slide-up" style={{ padding: '1.5rem', animationDelay: '0.3s' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <h3 style={{ margin: 0, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <ion-icon name="time-outline" style={{ color: 'var(--primary)' }}></ion-icon>
-              Recent Cases
+              Recent Cases Overview
             </h3>
-            <Link to="/cases" style={{ color: 'var(--primary)', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.25rem', transition: 'gap 0.2s' }}>
-              View All <ion-icon name="arrow-forward-outline"></ion-icon>
-            </Link>
+            {roleId !== 1 && roleId !== 4 && (
+              <Link to="/cases" style={{ color: 'var(--primary)', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.25rem', transition: 'gap 0.2s' }}>
+                View All <ion-icon name="arrow-forward-outline"></ion-icon>
+              </Link>
+            )}
           </div>
           
           <div className="table-container">
@@ -181,7 +308,7 @@ const Dashboard = () => {
                 ) : (
                   <tr>
                     <td colSpan="5" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>
-                      No active cases in database yet. Click "Open New Case" to add a new record.
+                      No active cases in database yet.
                     </td>
                   </tr>
                 )}
@@ -194,7 +321,7 @@ const Dashboard = () => {
         <div className="glass-panel animate-slide-up" style={{ padding: '1.5rem', animationDelay: '0.4s' }}>
           <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <ion-icon name="notifications-outline" style={{ color: 'var(--danger)' }}></ion-icon>
-            Pending Actions
+            Pending Actions & Alerts
           </h3>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 
 const Reports = () => {
   const [reports, setReports] = useState([]);
@@ -19,7 +20,17 @@ const Reports = () => {
 
   return (
     <div className="page-content animate-fade-in">
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1.5rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>
+            <Link to="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--primary)' }}>
+              <ion-icon name="home-outline"></ion-icon> Home
+            </Link>
+            <span>/</span>
+            <span>Reports</span>
+          </div>
+          <h1 style={{ fontSize: '1.75rem', margin: 0 }}> medico-legal Reports Registry</h1>
+        </div>
         <button className="btn btn-primary">
           <ion-icon name="print-outline"></ion-icon> Print Selected
         </button>
